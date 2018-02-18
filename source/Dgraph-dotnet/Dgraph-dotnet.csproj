@@ -1,0 +1,27 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netstandard1.6</TargetFramework>
+
+    <PackageId>Dgraph-dotnet</PackageId>
+    
+    <Title>adsfadf></Title>
+    <Authors>Me</Authors>
+    <Company>MyCompany</Company>
+    <Product>Wow</Product>
+    <Description>My Dgraph .Net lib</Description>
+    <PackageProjectUrl>gitbutaddress</PackageProjectUrl>
+    <RepositoryUrl>gitaddrress</RepositoryUrl>
+    <IncludeSymbols>True</IncludeSymbols>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Grpc.Core" Version="1.7.1"/>
+    <PackageReference Include="Grpc.Tools" Version="1.7.1"/>
+    <PackageReference Include="Grpc" Version="1.7.1"/>
+    <PackageReference Include="Google.Protobuf" Version="3.4.1"/>
+    <PackageReference Include="System.ValueTuple" Version="4.4.0"/>
+    <PackageReference Include="FluentResults" Version="1.0.0"/>
+  </ItemGroup>
+
+</Project>

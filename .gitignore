@@ -1,0 +1,16 @@
+# Visual Studio Code
+.vscode
+
+# Project Todo reminder
+TODO
+
+# Build results
+[Bb]in/
+[Oo]bj/
+output
+artifacts
+
+# Cake
+tools
+!tools/packages.config
+
