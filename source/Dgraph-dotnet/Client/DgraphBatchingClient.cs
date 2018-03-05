@@ -4,19 +4,20 @@ using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using DgraphDotNet.Graph;
+using DgraphDotNet.Transactions;
 
 namespace DgraphDotNet {
 
-	internal class DgraphBatchingClient : DgraphRequestClient, IDgraphBatchingClient {
+	internal class DgraphBatchingClient : DgraphMutationsClient, IDgraphBatchingClient {
 
 		internal static int DEFAULT_BatchSize = 100;
 		internal static int DEFAULT_Batches = 100;
 
-		internal DgraphBatchingClient(GRPCConnectionFactory connectionFactory) : base(connectionFactory) {
+		internal DgraphBatchingClient(IGRPCConnectionFactory connectionFactory, ITransactionFactory transactionFactory) : base(connectionFactory, transactionFactory) {
 			SetBatchOptions(DEFAULT_Batches, DEFAULT_BatchSize);
 		}
 
-		internal DgraphBatchingClient(GRPCConnectionFactory connectionFactory, int numBatches, int batchSize) : base(connectionFactory) {
+		internal DgraphBatchingClient(IGRPCConnectionFactory connectionFactory, ITransactionFactory transactionFactory, int numBatches, int batchSize) : base(connectionFactory, transactionFactory) {
 			SetBatchOptions(numBatches, batchSize);
 		}
 
@@ -38,7 +39,7 @@ namespace DgraphDotNet {
 		private readonly System.Object clientMutex = new System.Object();
 		protected System.Object ThisClientMutex => clientMutex;
 
-		private readonly List<Mutation> batches = new List<Mutation>();
+		private readonly List<IMutation> batches = new List<IMutation>();
 		private readonly List<Mutex> batchesMutexes = new List<Mutex>();
 
 		protected int NumBatches => batches.Count;
@@ -55,7 +56,7 @@ namespace DgraphDotNet {
 				this.batchSize = batchSize;
 
 				for (int i = 0; i < numBatches; i++) {
-					batches.Add(new Mutation(this));
+					batches.Add(new Mutation());
 					batchesMutexes.Add(new Mutex());
 				}
 			}
@@ -66,7 +67,7 @@ namespace DgraphDotNet {
 
 			if (edge != null) {
 				// int is atomic and it's ok if we get multiples seeing the same values.
-				Task t = Task.Factory.StartNew(() => BatchUpdate(addToBatch++, (Mutation req) => { req.AddEdge(edge); }));
+				Task t = Task.Factory.StartNew(() => BatchUpdate(addToBatch++, (IMutation req) => { req.AddEdge(edge); }));
 			}
 		}
 
@@ -74,7 +75,7 @@ namespace DgraphDotNet {
 			AssertNotDisposed();
 
 			if (property != null) {
-				Task t = Task.Factory.StartNew(() => BatchUpdate(addToBatch++, (Mutation req) => { req.AddProperty(property); }));
+				Task t = Task.Factory.StartNew(() => BatchUpdate(addToBatch++, (IMutation req) => { req.AddProperty(property); }));
 			}
 		}
 
@@ -82,7 +83,7 @@ namespace DgraphDotNet {
 			AssertNotDisposed();
 
 			if (edge != null) {
-				Task t = Task.Factory.StartNew(() => BatchUpdate(addToBatch++, (Mutation req) => { req.DeleteEdge(edge); }));
+				Task t = Task.Factory.StartNew(() => BatchUpdate(addToBatch++, (IMutation req) => { req.DeleteEdge(edge); }));
 			}
 		}
 
@@ -90,17 +91,17 @@ namespace DgraphDotNet {
 			AssertNotDisposed();
 
 			if (property != null) {
-				Task t = Task.Factory.StartNew(() => BatchUpdate(addToBatch++, (Mutation req) => { req.DeleteProperty(property); }));
+				Task t = Task.Factory.StartNew(() => BatchUpdate(addToBatch++, (IMutation req) => { req.DeleteProperty(property); }));
 			}
 		}
 
-		private void BatchUpdate(int batch, Action<Mutation> updateFN) {
+		private void BatchUpdate(int batch, Action<IMutation> updateFN) {
 			batchesMutexes[batch].WaitOne();
 			try {
 				updateFN(batches[batch]);
 				if (batches[batch].NumAdditions + batches[batch].NumDeletions >= batchSize) {
 					SubmittBatch(batch);
-					batches[batch] = new Mutation(this);
+					batches[batch] = new Mutation();
 				}
 			} finally {
 				batchesMutexes[batch].ReleaseMutex();
@@ -109,8 +110,8 @@ namespace DgraphDotNet {
 
 		// must hold the batch mutex to call this
 		private void SubmittBatch(int batch) {
-			using(var txn = NewTransactionWithMutations_Internal()) {
-				var err = batches[batch].Submit(txn);
+			using(ITransactionWithMutations txn = transactionFactory.NewTransaction(this)) {
+				var err = batches[batch].SubmitTo(txn);
 				if(err.IsFailed) {
 					FailBatch(batches[batch]);
 				}
@@ -146,7 +147,7 @@ namespace DgraphDotNet {
 
 		// Public methods on concurrent bag are thread safe, but extension
 		// ones aren't, so can't use ToList() for example
-		private ConcurrentBag<Mutation> failedBatches = new ConcurrentBag<Mutation>();
+		private ConcurrentBag<IMutation> failedBatches = new ConcurrentBag<IMutation>();
 
 		public bool HasFailedBatches => !failedBatches.IsEmpty;
 
@@ -156,7 +157,7 @@ namespace DgraphDotNet {
 			List<Edge> DelEdges = new List<Edge>();
 			List<Property> DelProperties = new List<Property>();
 
-			while(failedBatches.TryTake(out Mutation mut)) {
+			while(failedBatches.TryTake(out IMutation mut)) {
 				var (addE, addP) = mut.AllAddLinks();
 				var (delE, delP) = mut.AllDeleteLinks();
 
@@ -169,7 +170,7 @@ namespace DgraphDotNet {
 			return ((AddEdges, AddProperties), (DelEdges, DelProperties));
 		}
 
-		private void FailBatch(Mutation mut) {
+		private void FailBatch(IMutation mut) {
 			failedBatches.Add(mut);
 		}
 

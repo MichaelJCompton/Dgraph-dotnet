@@ -5,8 +5,7 @@ using System.Collections.Generic;
 namespace DgraphDotNet.Transactions
 {
 
-    public interface ITransaction : IDisposable
-    {
+    public interface ITransaction : IDisposable {
         bool Committed { get; }
         bool Aborted { get; }
         bool HasError { get; }

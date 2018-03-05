@@ -82,7 +82,7 @@ namespace BatchExample {
                             if (split.Length == 2) {
                                 var node = client.GetOrCreateNode("genre" + split[1]);
                                 if (node.IsSuccess) {
-                                    var edge = client.BuildProperty(node.Value, "name", GraphValue.BuildStringValue(split[0]));
+                                    var edge = Clients.BuildProperty(node.Value, "name", GraphValue.BuildStringValue(split[0]));
                                     if (edge.IsSuccess) {
                                         client.BatchAddProperty(edge.Value);
                                     }
@@ -113,10 +113,10 @@ namespace BatchExample {
                             if (split.Length == 5 && long.TryParse(split[1], out long age)) {
                                 var node = client.GetOrCreateNode("user" + split[0]);
                                 if (node.IsSuccess) {
-                                    var ageEdge = client.BuildProperty(node.Value, "age", GraphValue.BuildIntValue(age));
-                                    var gender = client.BuildProperty(node.Value, "gender", GraphValue.BuildStringValue(split[2]));
-                                    var occupation = client.BuildProperty(node.Value, "occupation", GraphValue.BuildStringValue(split[3]));
-                                    var zipcode = client.BuildProperty(node.Value, "zipcode", GraphValue.BuildStringValue(split[4]));
+                                    var ageEdge = Clients.BuildProperty(node.Value, "age", GraphValue.BuildIntValue(age));
+                                    var gender = Clients.BuildProperty(node.Value, "gender", GraphValue.BuildStringValue(split[2]));
+                                    var occupation = Clients.BuildProperty(node.Value, "occupation", GraphValue.BuildStringValue(split[3]));
+                                    var zipcode = Clients.BuildProperty(node.Value, "zipcode", GraphValue.BuildStringValue(split[4]));
                                     if (ageEdge.IsSuccess && gender.IsSuccess && occupation.IsSuccess && zipcode.IsSuccess) {
                                         client.BatchAddProperty(ageEdge.Value);
                                         client.BatchAddProperty(gender.Value);
@@ -150,7 +150,7 @@ namespace BatchExample {
                             if (split.Length == 24) {
                                 var movieNode = client.GetOrCreateNode("movie" + split[0]);
                                 if (movieNode.IsSuccess) {
-                                    var name = client.BuildProperty(movieNode.Value, "name", GraphValue.BuildStringValue(split[1]));
+                                    var name = Clients.BuildProperty(movieNode.Value, "name", GraphValue.BuildStringValue(split[1]));
                                     if (name.IsSuccess) {
                                         client.BatchAddProperty(name.Value);
 
@@ -159,7 +159,7 @@ namespace BatchExample {
                                             if (split[i] == "1") {
                                                 var genreNode = client.GetOrCreateNode("genre" + (i - 5));
                                                 if (genreNode.IsSuccess) {
-                                                    var genre = client.BuildEdge(movieNode.Value, "genre", genreNode.Value);
+                                                    var genre = Clients.BuildEdge(movieNode.Value, "genre", genreNode.Value);
                                                     if (genre.IsSuccess) {
                                                         client.BatchAddEdge(genre.Value);
                                                     }
@@ -195,7 +195,7 @@ namespace BatchExample {
                                 if (userNode.IsSuccess && movieNode.IsSuccess) {
                                     Dictionary<string, string> facets = new Dictionary<string, string>();
                                     facets.Add("rating", split[2]);
-                                    var rated = client.BuildEdge(userNode.Value, "rated", movieNode.Value, facets);
+                                    var rated = Clients.BuildEdge(userNode.Value, "rated", movieNode.Value, facets);
                                     if (rated.IsSuccess) {
                                         client.BatchAddEdge(rated.Value);
                                     }

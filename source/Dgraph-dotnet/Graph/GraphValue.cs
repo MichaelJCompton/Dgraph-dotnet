@@ -3,6 +3,7 @@ using System.Diagnostics;
 using System.Globalization;
 using System.Text;
 using Google.Protobuf;
+using static Api.Value;
 
 namespace DgraphDotNet.Graph {
     public class GraphValue : IEdgeTarget {
@@ -114,6 +115,34 @@ namespace DgraphDotNet.Graph {
         public byte[] GeoValue => Value.GeoVal.ToByteArray();
         public byte[] DateValue => Value.DatetimeVal.ToByteArray();
         public string PasswordValue => Value.PasswordVal;
+
+        public override string ToString() {
+            switch (Value.ValCase) {
+                case ValOneofCase.DefaultVal:
+                    return Value.DefaultVal;
+                case ValOneofCase.BytesVal:
+                    return Value.BytesVal.ToStringUtf8();
+                case ValOneofCase.IntVal:
+                    return Value.IntVal.ToString();
+                case ValOneofCase.BoolVal:
+                    return Value.BoolVal.ToString();
+                case ValOneofCase.StrVal:
+                    return Value.StrVal;
+                case ValOneofCase.DoubleVal:
+                    return Value.DoubleVal.ToString();
+                case ValOneofCase.GeoVal:
+                    return Value.GeoVal.ToStringUtf8();
+                case ValOneofCase.DateVal:
+                    return Value.DateVal.ToStringUtf8();
+                case ValOneofCase.DatetimeVal:
+                    return Value.DatetimeVal.ToStringUtf8();
+                case ValOneofCase.PasswordVal:
+                    return Value.PasswordVal;
+                case ValOneofCase.UidVal:
+                    return Value.UidVal.ToString();
+            }
+            return "";
+        }
     }
 
 }

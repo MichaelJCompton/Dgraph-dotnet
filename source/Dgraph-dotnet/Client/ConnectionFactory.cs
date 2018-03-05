@@ -6,7 +6,11 @@ using Grpc.Core;
 
 namespace DgraphDotNet {
 
-    internal class GRPCConnectionFactory {
+    internal interface IGRPCConnectionFactory {
+        bool TryConnect(string address, out IGRPCConnection connection);
+    }
+
+    internal class GRPCConnectionFactory : IGRPCConnectionFactory {
 
             public GRPCConnectionFactory() {
 
@@ -16,7 +20,7 @@ namespace DgraphDotNet {
             /// on bad addresses grpc still returns a connection, but will throw
             /// exception on use. </summary>
             /// <remarks>Pre : <c>!string.IsNullOrEmpty(address)</c>. </remarks>
-            public virtual bool TryConnect(string address, out GRPCConnection connection) {
+            public virtual bool TryConnect(string address, out IGRPCConnection connection) {
                 Debug.Assert(!string.IsNullOrEmpty(address));
 
                 try {

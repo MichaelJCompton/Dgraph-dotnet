@@ -1,13 +1,12 @@
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
-using System.Diagnostics;
+using System.Globalization;
 using System.Linq;
-using System.Threading;
-using System.Threading.Tasks;
 using Api;
 using DgraphDotNet.Graph;
 using DgraphDotNet.Transactions;
+using FluentResults;
 using Grpc.Core;
 
 /*
@@ -33,10 +32,12 @@ namespace DgraphDotNet {
 
     internal class DgraphClient : IDgraphClient {
 
-        protected readonly GRPCConnectionFactory connectionFactory;
+        protected readonly IGRPCConnectionFactory connectionFactory;
+        protected readonly ITransactionFactory transactionFactory;
 
-        internal DgraphClient(GRPCConnectionFactory connectionFactory) {
+        internal DgraphClient(IGRPCConnectionFactory connectionFactory, ITransactionFactory transactionFactory) {
             this.connectionFactory = connectionFactory;
+            this.transactionFactory = transactionFactory;
             linRead = new LinRead();
         }
 
@@ -47,13 +48,13 @@ namespace DgraphDotNet {
         //
         #region Connections
 
-        private readonly ConcurrentDictionary<string, GRPCConnection> connections = new ConcurrentDictionary<string, GRPCConnection>();
+        private readonly ConcurrentDictionary<string, IGRPCConnection> connections = new ConcurrentDictionary<string, IGRPCConnection>();
 
         public void Connect(string address) {
             AssertNotDisposed();
 
             if (!string.IsNullOrEmpty(address)) {
-                if (connections.TryGetValue(address, out GRPCConnection connection)) {
+                if (connections.TryGetValue(address, out IGRPCConnection connection)) {
                     connection.LastKnownStatus = Status.DefaultSuccess;
                 } else {
                     if (connectionFactory.TryConnect(address, out connection)) {
@@ -78,8 +79,6 @@ namespace DgraphDotNet {
             return connections.Select(kvp => kvp.Key);
         }
 
-        // FIXME: Needs option the connections for retries, timeout etc.
-
         #endregion
 
         // 
@@ -102,10 +101,68 @@ namespace DgraphDotNet {
             connections.Values.FirstOrDefault().Alter(op);
         }
 
-        public virtual ITransaction NewTransaction() {
+        public ITransaction NewTransaction() {
             AssertNotDisposed();
 
-            return new Transaction<DgraphClient>(this);
+            return transactionFactory.NewTransaction(this);
+        }
+
+        public FluentResults.Result<INode> Upsert(string predicate, GraphValue value, int maxRetrys = 1) {
+            var query = $"{{ q(func: eq({predicate}, \"{value.ToString()}\")) {{ uid }} }}";
+            var newNodeBlankName = "upsertNode";
+
+            var retryRemaining = (maxRetrys < 1) ? 1 : maxRetrys;
+            FluentResults.Result<INode> result = null;
+
+            Func<FluentResults.Result<INode>, FluentResults.Result<INode>, FluentResults.Result<INode>> addErr =
+                (FluentResults.Result<INode> curError, FluentResults.Result<INode> newError) => {
+                    return curError == null || !curError.IsFailed
+                        ? newError
+                        : Results.Merge<INode>(curError, newError);
+                };
+
+            while (retryRemaining >= 0) {
+                retryRemaining--;
+
+                using(var txn = NewTransaction()) {
+                    var queryResult = txn.Query(query);
+
+                    if (queryResult.IsFailed) {
+                        result = addErr(result, queryResult.ConvertToResultWithValueType<INode>());
+                        continue;
+                    }
+
+                    if (String.Equals(queryResult.Value, "{\"q\":[]}", StringComparison.Ordinal)) {
+                        var assigned = txn.Mutate($"{{ \"uid\": \"_:{newNodeBlankName}\", \"{predicate}\": \"{value.ToString()}\" }}");
+                        if (assigned.IsFailed) {
+                            result = addErr(result, assigned.ConvertToResultWithValueType<INode>());
+                            continue;
+                        }
+                        var err = txn.Commit();
+                        if (err.IsSuccess) {
+                            var UIDasString = assigned.Value[newNodeBlankName].Replace("0x", string.Empty); // why doesn't UInt64.TryParse() work with 0x...???
+                            if (UInt64.TryParse(UIDasString, NumberStyles.HexNumber, CultureInfo.InvariantCulture, out var UID)) {
+                                return Results.Ok<INode>(new UIDNode(UID));
+                            }
+                            result = addErr(result, Results.Fail<INode>("Failed to parse UID : " + UIDasString));
+                            continue;
+                        }
+                        result = addErr(result, err.ConvertToResultWithValueType<INode>());
+                        continue;
+                    } else {
+                        var UIDasString = queryResult.Value
+                            .Replace("{\"q\":[{\"uid\":\"0x", string.Empty)
+                            .Replace("\"}]}", string.Empty);
+
+                        if (UInt64.TryParse(UIDasString, NumberStyles.HexNumber, CultureInfo.InvariantCulture, out var UID)) {
+                            return Results.Ok<INode>(new UIDNode(UID));
+                        }
+                        result = addErr(result, Results.Fail<INode>("Failed to parse UID : " + UIDasString));
+                        continue;
+                    }
+                }
+            }
+            return result;
         }
 
         internal Response Query(Api.Request req) {
@@ -143,7 +200,7 @@ namespace DgraphDotNet {
 
         internal void MergeLinRead(LinRead newLinRead) {
             lock(LinReadMutex) {
-                Transaction<DgraphClient>.MergeLinReads(linRead, newLinRead);
+                Transaction.MergeLinReads(linRead, newLinRead);
             }
         }
 

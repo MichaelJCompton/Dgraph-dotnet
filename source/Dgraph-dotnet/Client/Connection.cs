@@ -5,12 +5,22 @@ using Grpc.Core;
 
 namespace DgraphDotNet {
 
+	internal interface IGRPCConnection : IDisposable {
+		Status LastKnownStatus { get; set; }
+
+        void Alter(Api.Operation op);
+        Response Query(Api.Request req);
+        Assigned Mutate(Api.Mutation mut);
+        void Commit(TxnContext context);
+        void Discard(TxnContext context);
+    }
+
 	/// <summary>
 	/// a gRPC connection wrapping a <c>Protos.Dgraph.DgraphClient</c>.  
 	/// Doesn't check for rpcExceptions or other failures --- it's the job of the calling
 	/// classes to know what to do if a connection is faulty.
 	/// </summary>
-	internal class GRPCConnection : IDisposable {
+	internal class GRPCConnection : IGRPCConnection {
 
 		private readonly Api.Dgraph.DgraphClient connection;
 		private readonly Channel channel;
@@ -18,7 +28,7 @@ namespace DgraphDotNet {
 		// grpc chans also have public ChannelState State { get; }
 		// https://grpc.io/grpc/csharp/api/Grpc.Core.ChannelState.html
 
-		internal Status LastKnownStatus { get; set; }
+		public Status LastKnownStatus { get; set; }
 
 		/// <remarks>
 		///       Pre : <c>channel != null</c> <c>connection != null</c> and 

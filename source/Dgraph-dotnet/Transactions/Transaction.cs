@@ -28,21 +28,15 @@ if(...) {
 or
 
 client.Query(....) without a transaction
-
-also
-dispose should check if ok then commit, deal with all errors
-
-also would like to retry a whole transaction.
 */
 
-// FIXME: add assrts that not disposed and still usable
-// FIXME: checks before any action
+
 
 namespace DgraphDotNet.Transactions {
 
-    internal class Transaction<TDgraphClient> : ITransaction where TDgraphClient : DgraphClient {
+    internal class Transaction : ITransaction {
 
-        public readonly TDgraphClient Client;
+        private readonly DgraphClient client;
 
         private enum TransactionState { OK, Committed, Aborted, Error }
 
@@ -53,8 +47,8 @@ namespace DgraphDotNet.Transactions {
 
         Response lastQueryResponse;
 
-        internal Transaction(TDgraphClient client) {
-            this.Client = client;
+        internal Transaction(DgraphClient client) {
+            this.client = client;
 
             context = new TxnContext();
             context.LinRead = client.GetLinRead();
@@ -90,7 +84,7 @@ namespace DgraphDotNet.Transactions {
                 request.StartTs = context.StartTs;
                 request.LinRead = context.LinRead;
 
-                lastQueryResponse = Client.Query(request);
+                lastQueryResponse = client.Query(request);
 
                 var err = MergeContext(lastQueryResponse.Txn);
 
@@ -141,7 +135,7 @@ namespace DgraphDotNet.Transactions {
 
             try {
                 mutation.StartTs = context.StartTs;
-                var assigned = Client.Mutate(mutation);
+                var assigned = client.Mutate(mutation);
 
                 if (mutation.CommitNow) {
                     transactionState = TransactionState.Committed;
@@ -183,7 +177,7 @@ namespace DgraphDotNet.Transactions {
             context.Aborted = true;
 
             try {
-                Client.Discard(context);
+                client.Discard(context);
             } catch (RpcException) { }
         }
 
@@ -201,7 +195,7 @@ namespace DgraphDotNet.Transactions {
             }
 
             try {
-                Client.Commit(context);
+                client.Commit(context);
                 return Results.Ok();
             } catch (RpcException rpcEx) {
                 return Results.Fail(new FluentResults.ExceptionalError(rpcEx));
@@ -216,7 +210,7 @@ namespace DgraphDotNet.Transactions {
             }
 
             MergeLinReads(context.LinRead, srcContext.LinRead);
-            Client.MergeLinRead(srcContext.LinRead);
+            client.MergeLinRead(srcContext.LinRead);
 
             if (context.StartTs == 0) {
                 context.StartTs = srcContext.StartTs;

@@ -10,27 +10,18 @@ using Grpc.Core;
 namespace DgraphDotNet {
 
     internal class Mutation : IMutation {
-        private readonly DgraphRequestClient client;
-        private TransactionWithMutations transaction;
 
-        private readonly string XIDPropertyName = "xid";
+        private ITransactionWithMutations transaction;
 
         // Each request instance is a front for a Protos.request.
         private readonly Api.Mutation mutation = new Api.Mutation();
         private Api.Mutation ApiMutation => mutation;
 
-        /// <summary>
-        /// Create a request tied to a given client.
-        /// </summary>
-        internal Mutation(DgraphRequestClient client) {
-            this.client = client;
+        internal Mutation() {
+
         }
 
-        /// <summary>
-        /// Create a request in a given transaction.
-        /// </summary>
-        internal Mutation(TransactionWithMutations transaction) {
-            client = transaction.Client;
+        internal Mutation(ITransactionWithMutations transaction) {
             this.transaction = transaction;
         }
 
@@ -63,18 +54,18 @@ namespace DgraphDotNet {
         public int NumDeletions => ApiMutation.Del.Count;
 
         public FluentResults.Result<IDictionary<string, string>> Submit() {
-            return Submit(transaction);
+            if(transaction != null) {
+                return transaction.ApiMutate(ApiMutation);
+            } else {
+                return Results.Fail<IDictionary<string, string>>("No transaction set");
+            }
         }
 
-        /// <summary>
-        /// Submit to a particular transaction (used internally, better to get a mutation
-        /// from the current transaction and use <see cref="Mutation.Submit()"/>).
-        /// </summary>
-        internal FluentResults.Result<IDictionary<string, string>> Submit(TransactionWithMutations transaction) {
-            return transaction.Mutate(ApiMutation);
+        public FluentResults.Result<IDictionary<string, string>> SubmitTo(ITransactionWithMutations transaction) {
+            return transaction.ApiMutate(ApiMutation);
         }
 
-        internal(List<Edge>, List<Property>) AllAddLinks() {
+        public (List<Edge>, List<Property>) AllAddLinks() {
             List<Edge> edges = new List<Edge>();
             List<Property> properties = new List<Property>();
 
@@ -85,7 +76,7 @@ namespace DgraphDotNet {
             return (edges, properties);
         }
 
-        internal(List<Edge>, List<Property>) AllDeleteLinks() {
+        public (List<Edge>, List<Property>) AllDeleteLinks() {
             List<Edge> edges = new List<Edge>();
             List<Property> properties = new List<Property>();
 
@@ -104,13 +95,12 @@ namespace DgraphDotNet {
                 INode target = nquad.ObjectId.StartsWith("_:")
                     ? (INode) new BlankNode(nquad.ObjectId)
                     : (INode) new NamedNode(Convert.ToUInt64(nquad.ObjectId), "Unknown");
-
-                edges.Add(client.BuildEdge(source, nquad.Predicate, target).Value);
+                edges.Add(Clients.BuildEdge(source, nquad.Predicate, target).Value);
             } else {
                 INode source = nquad.ObjectId.StartsWith("_:")
                     ? (INode) new BlankNode(nquad.ObjectId)
                     : (INode) new NamedNode(Convert.ToUInt64(nquad.ObjectId), "Unknown");
-                properties.Add(client.BuildProperty(source, nquad.Predicate, GraphValue.BuildFromValue(nquad.ObjectValue)).Value);
+                properties.Add(Clients.BuildProperty(source, nquad.Predicate, GraphValue.BuildFromValue(nquad.ObjectValue)).Value);
             }
         }
 
@@ -124,9 +114,6 @@ namespace DgraphDotNet {
         private void DealWithEdge(Edge edge, Action<NQuad> placeNQuad) {
             NQuad nquad = BuildNQuadFromEdge(edge);
             placeNQuad(nquad);
-
-            AddXID(edge.Source);
-            AddXID(edge.Target);
         }
 
         private NQuad BuildNQuadFromEdge(Edge edge) {
@@ -143,9 +130,6 @@ namespace DgraphDotNet {
         private void DealWithProperty(Property property, Action<NQuad> placeNQuad) {
             NQuad nquad = BuildNQuadFromProperty(property);
             placeNQuad(nquad);
-
-            AddXID(property.Source);
-
         }
 
         private NQuad BuildNQuadFromProperty(Property property) {
@@ -163,24 +147,10 @@ namespace DgraphDotNet {
             switch (node) {
                 case BlankNode bnode:
                     return bnode.BlankNodeName;
-                case NamedNode namedNode:
-                    return namedNode.UID.ToString();
+                case UIDNode uidNode:
+                    return uidNode.UID.ToString();
             }
             return null;
-        }
-        private void AddXID(INode node) {
-            switch (node) {
-                case XIDNode xidNode:
-                    if (!xidNode.XIDAdded) {
-                        var xidEdge = client.BuildProperty(node, XIDPropertyName, GraphValue.BuildStringValue(xidNode.XID));
-                        if (xidEdge.IsSuccess) {
-                            xidNode.XIDWasAdded(); // gotta do this first or infinite adding xid loop
-                            AddProperty(xidEdge.Value);
-                        }
-                        // BuildProperty should never fail here.  It can only fail if the args are wrong.
-                    }
-                    break;
-            }
         }
 
         #endregion

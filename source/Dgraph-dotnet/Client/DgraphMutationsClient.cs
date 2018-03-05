@@ -22,7 +22,7 @@ using Grpc.Core;
 
 namespace DgraphDotNet {
 
-	internal class DgraphRequestClient : DgraphClient, IDgraphMutationsClient {
+	internal class DgraphMutationsClient : DgraphClient, IDgraphMutationsClient {
 
 		// UIDs are allocated by Dgraph with a gRPC call to AssignUids.
 		// AssignUids returns a range of UIDs allocated to this client.
@@ -45,7 +45,7 @@ namespace DgraphDotNet {
 		Channel zeroChannel;
 		Intern.Zero.ZeroClient zeroClient;
 
-		internal DgraphRequestClient(GRPCConnectionFactory connectionFactory) : base(connectionFactory) {
+		internal DgraphMutationsClient(IGRPCConnectionFactory connectionFactory, ITransactionFactory transactionFactory) : base(connectionFactory, transactionFactory) {
 
 		}
 
@@ -55,14 +55,6 @@ namespace DgraphDotNet {
 		/// </summary>
 		public void ConnectZero(string address) {
 			zeroAddr = address;
-		}
-
-		public ITransactionWithMutations NewTransactionWithMutations() {
-			return new TransactionWithMutations(this);
-		}
-
-		internal TransactionWithMutations NewTransactionWithMutations_Internal() {
-			return new TransactionWithMutations(this);
 		}
 
 		// 
@@ -81,7 +73,6 @@ namespace DgraphDotNet {
 		// really do need to add a new node, otherwise we'll waste node allocations
 		// from the server.
 		private ConcurrentDictionary<string, INamedNode> knownNodes = new ConcurrentDictionary<string, INamedNode>();
-		private ConcurrentDictionary<string, IXIDNode> knownXIDNodes = new ConcurrentDictionary<string, IXIDNode>();
 
 		private readonly System.Object nodeMutex = new System.Object();
 		protected System.Object ThisClientNodeMutex => nodeMutex;
@@ -103,20 +94,6 @@ namespace DgraphDotNet {
 		}
 
 		public bool IsNodeName(string name) => knownNodes.ContainsKey(name);
-
-		public FluentResults.Result<IXIDNode> GetOrCreateXIDNode(string xid) {
-			AssertNotDisposed();
-
-			if (string.IsNullOrEmpty(xid)) {
-				return Results.Fail<IXIDNode>(new BadArgs("Empty args"));
-			}
-
-			return NodeFromUIDOption(NextUID(), uid => GetOrCreateNode(xid, knownXIDNodes, () =>(IXIDNode) new XIDNode(uid, xid)));
-		}
-
-
-		public bool IsXIDName(string name) => knownXIDNodes.ContainsKey(name);
-
 
 		/// <summary>
 		/// (thread-safe) Lookup a node name and creates only if not existing.
@@ -146,7 +123,7 @@ namespace DgraphDotNet {
 				}
 			}
 
-			return resultNode; 
+			return resultNode;
 		}
 
 		private FluentResults.Result<TNode> NodeFromUIDOption<TNode>(FluentResults.Result<ulong> uidResult, Func<ulong, TNode> nodeCreator)
@@ -191,56 +168,6 @@ namespace DgraphDotNet {
 
 		#endregion
 
-		// 
-		// ------------------------------------------------------
-		//                      Edges 
-		// ------------------------------------------------------
-		//
-		#region Edges
-
-		public FluentResults.Result<Edge> BuildEdge(INode source, string edgeName, INode target, IDictionary<string, string> facets = null) {
-			AssertNotDisposed();
-
-			if (source == null || target == null || string.IsNullOrEmpty(edgeName)) {
-				return FluentResults.Results.Fail<Edge>(new FluentResults.ExceptionalError(new ArgumentNullException()));
-			}
-
-			Edge result = new Edge(source, edgeName, target);
-
-			AddFacetsToLink(result, facets);
-
-			return FluentResults.Results.Ok<Edge>(result);
-		}
-
-		public FluentResults.Result<Property> BuildProperty(INode source, string predicateName, GraphValue value, IDictionary<string, string> facets = null) {
-			AssertNotDisposed();
-
-			if (source == null || value == null || string.IsNullOrEmpty(predicateName)) {
-				return FluentResults.Results.Fail<Property>(new FluentResults.ExceptionalError(new ArgumentNullException()));
-			}
-
-			Property result = new Property(source, predicateName, value);
-
-			AddFacetsToLink(result, facets);
-
-			return FluentResults.Results.Ok<Property>(result);
-		}
-
-		// Add the facets ignoring any null or "".
-		// 
-		// Pre : edge != null and not disposed
-		private void AddFacetsToLink<TargetType>(GraphLink<TargetType> edge, IDictionary<string, string> facets) where TargetType : IEdgeTarget {
-			Debug.Assert(edge != null);
-
-			if (facets != null) {
-				foreach (var kv in facets) {
-					if (!string.IsNullOrEmpty(kv.Key) && !string.IsNullOrEmpty(kv.Value)) {
-						edge.Facets.Add(kv.Key, kv.Value);
-					}
-				}
-			}
-		}
-		#endregion
 
 		// 
 		// ------------------------------------------------------
@@ -252,7 +179,7 @@ namespace DgraphDotNet {
 
 		protected override void DisposeIDisposables() {
 			if (!Disposed) {
-				zeroChannel.ShutdownAsync();
+				zeroChannel?.ShutdownAsync();
 				base.DisposeIDisposables();
 			}
 		}

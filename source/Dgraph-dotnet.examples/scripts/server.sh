@@ -24,6 +24,9 @@ stop() {
     sleep 5s
     
     pkill "dgraph"
+
+    echo ""
+    echo "Shutdown complete"
 }
 
 clean() {
