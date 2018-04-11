@@ -11,6 +11,6 @@ output
 artifacts
 
 # Cake
-tools
+tools/**
 !tools/packages.config
 
