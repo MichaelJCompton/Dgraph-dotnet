@@ -32,5 +32,7 @@ namespace DgraphDotNet {
         FluentResults.Result<INamedNode> GetOrCreateNode(string name);
 
         bool IsNodeName(string name);
+
+        ITransactionWithMutations NewTransactionWithMutations();
     }
 }

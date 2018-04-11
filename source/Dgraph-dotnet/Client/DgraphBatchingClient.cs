@@ -110,7 +110,7 @@ namespace DgraphDotNet {
 
 		// must hold the batch mutex to call this
 		private void SubmittBatch(int batch) {
-			using(ITransactionWithMutations txn = transactionFactory.NewTransaction(this)) {
+			using(var txn = NewTransactionWithMutations()) {
 				var err = batches[batch].SubmitTo(txn);
 				if(err.IsFailed) {
 					FailBatch(batches[batch]);

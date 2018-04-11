@@ -57,6 +57,12 @@ namespace DgraphDotNet {
 			zeroAddr = address;
 		}
 
+		public ITransactionWithMutations NewTransactionWithMutations() {
+            AssertNotDisposed();
+
+            return transactionFactory.NewTransaction(this);
+        }
+
 		// 
 		// ------------------------------------------------------
 		//                      Nodes 
