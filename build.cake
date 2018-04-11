@@ -33,6 +33,7 @@ var localPackages = "../../LocalPackages";
 Setup(ctx =>
 {
     EnsureDirectoryExists(artifactsPath);
+    EnsureDirectoryExists(Path.Combine(pathToLib, "DgraphAPI"));
 
     gitVersionInfo = GitVersion(new GitVersionSettings {
         OutputType = GitVersionOutput.Json
