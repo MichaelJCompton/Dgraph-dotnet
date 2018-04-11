@@ -115,9 +115,7 @@ namespace DgraphDotNet.Transactions {
             return Mutate(mut).ConvertTo();
         }
 
-        // This needs to be virtual so we can make substitutes in the unit tests.
-        // NSubstitute has troubles with it otherwise.
-        internal virtual FluentResults.Result<IDictionary<string, string>> Mutate(Api.Mutation mutation) {
+        internal FluentResults.Result<IDictionary<string, string>> Mutate(Api.Mutation mutation) {
             AssertNotDisposed();
 
             if (transactionState != TransactionState.OK) {
