@@ -34,15 +34,15 @@ Setup(ctx =>
 {
     EnsureDirectoryExists(artifactsPath);
 
-    // gitVersionInfo = GitVersion(new GitVersionSettings {
-    //     OutputType = GitVersionOutput.Json
-    // });
+    gitVersionInfo = GitVersion(new GitVersionSettings {
+        OutputType = GitVersionOutput.Json
+    });
 
-    // nugetVersion = gitVersionInfo.NuGetVersion;
-    nugetVersion = "0.0.2";
+    nugetVersion = gitVersionInfo.NuGetVersion;
+    //nugetVersion = "0.0.2";
 
-    // Information("Building DgraphDotNet v{0}", nugetVersion);
-    // Information("Informational Version {0}", gitVersionInfo.InformationalVersion);
+    Information("Building DgraphDotNet v{0}", nugetVersion);
+    Information("Informational Version {0}", gitVersionInfo.InformationalVersion);
 });
 
 
@@ -61,6 +61,7 @@ Task("Clean")
     .Does(() => 
     { 
         CleanDirectory(artifactsPath);
+        CleanDirectory(Path.Combine(pathToLib, "DgraphAPI"));
 
         DotNetCoreClean(".", 
             new DotNetCoreCleanSettings
@@ -70,12 +71,24 @@ Task("Clean")
         );
     });
 
+Task("GetDgraph")
+    .Does(() =>
+    {
+        using(var process = StartAndReturnProcess("./scripts/getDgraph.sh"))
+        {
+            process.WaitForExit();
+            // This should output 0 as valid arguments supplied
+            Information("Exit code: {0}", process.GetExitCode());
+        }
+    });
 
 Task("Build")
     .IsDependentOn("Clean")
+    .IsDependentOn("GetDgraph")
     .Does(() => 
     {
-        //ReplaceRegexInFiles("...file name...", "version = \"[^\"]+", "version = \"" + nugetVersion);
+        // ReplaceRegexInFiles("...file name...", "version = \"[^\"]+", "version = \"" + nugetVersion);
+        // and should supply dgraph version as arg too
 
         DotNetCoreBuild(".", 
             new DotNetCoreBuildSettings

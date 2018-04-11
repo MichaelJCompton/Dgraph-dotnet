@@ -5,13 +5,13 @@
 
     <PackageId>Dgraph-dotnet</PackageId>
     
-    <Title>adsfadf></Title>
-    <Authors>Me</Authors>
-    <Company>MyCompany</Company>
-    <Product>Wow</Product>
-    <Description>My Dgraph .Net lib</Description>
-    <PackageProjectUrl>gitbutaddress</PackageProjectUrl>
-    <RepositoryUrl>gitaddrress</RepositoryUrl>
+    <Title>.Net Dgraph Client</Title>
+    <Authors>Michael Compton</Authors>
+    <Company>Michael Compton Pty Ltd</Company>
+    <Product>.Net Dgraph Client</Product>
+    <Description>.Net client library for Dgraph</Description>
+    <PackageProjectUrl>https://github.com/MichaelJCompton/Dgraph-dotnet</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/MichaelJCompton/Dgraph-dotnet</RepositoryUrl>
     <IncludeSymbols>True</IncludeSymbols>
   </PropertyGroup>
 

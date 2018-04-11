@@ -15,7 +15,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ObjectsToDgraph", "source\D
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MovieLensBatch", "source\Dgraph-dotnet.examples\MovieLensBatch\MovieLensBatch.csproj", "{0F560862-19BC-44F5-AC79-B90D6BD16E8F}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MutationExamples", "source\Dgraph-dotnet.examples\MutationExamples\MutationExamples.csproj", "{B70197CC-3F10-41A7-BE0F-15752FA7FBE9}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MutationExample", "source\Dgraph-dotnet.examples\MutationExample\MutationExample.csproj", "{B70197CC-3F10-41A7-BE0F-15752FA7FBE9}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
