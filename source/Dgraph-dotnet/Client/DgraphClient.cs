@@ -103,20 +103,20 @@ namespace DgraphDotNet {
             return transactionFactory.NewTransaction(this);
         }
 
-        public FluentResults.Result<INode> Upsert(string predicate, GraphValue value, int maxRetrys = 1) {
+        public FluentResults.Result<(INode, bool)> Upsert(string predicate, GraphValue value, int maxRetrys = 1) {
             AssertNotDisposed();
 
             var query = $"{{ q(func: eq({predicate}, \"{value.ToString()}\")) {{ uid }} }}";
             var newNodeBlankName = "upsertNode";
 
             var retryRemaining = (maxRetrys < 1) ? 1 : maxRetrys;
-            FluentResults.Result<INode> result = null;
+            FluentResults.Result<(INode, bool)> result = null;
 
-            Func<FluentResults.Result<INode>, FluentResults.Result<INode>, FluentResults.Result<INode>> addErr =
-                (FluentResults.Result<INode> curError, FluentResults.Result<INode> newError) => {
+            Func<FluentResults.Result<(INode, bool)>, FluentResults.Result<(INode, bool)>, FluentResults.Result<(INode, bool)>> addErr =
+                (FluentResults.Result<(INode, bool)> curError, FluentResults.Result<(INode, bool)> newError) => {
                     return curError == null || !curError.IsFailed
                         ? newError
-                        : Results.Merge<INode>(curError, newError);
+                        : Results.Merge<(INode, bool)>(curError, newError);
                 };
 
             while (retryRemaining >= 0) {
@@ -126,26 +126,26 @@ namespace DgraphDotNet {
                     var queryResult = txn.Query(query);
 
                     if (queryResult.IsFailed) {
-                        result = addErr(result, queryResult.ConvertToResultWithValueType<INode>());
+                        result = addErr(result, queryResult.ConvertToResultWithValueType<(INode, bool)>());
                         continue;
                     }
 
                     if (String.Equals(queryResult.Value, "{\"q\":[]}", StringComparison.Ordinal)) {
                         var assigned = txn.Mutate($"{{ \"uid\": \"_:{newNodeBlankName}\", \"{predicate}\": \"{value.ToString()}\" }}");
                         if (assigned.IsFailed) {
-                            result = addErr(result, assigned.ConvertToResultWithValueType<INode>());
+                            result = addErr(result, assigned.ConvertToResultWithValueType<(INode, bool)>());
                             continue;
                         }
                         var err = txn.Commit();
                         if (err.IsSuccess) {
                             var UIDasString = assigned.Value[newNodeBlankName].Replace("0x", string.Empty); // why doesn't UInt64.TryParse() work with 0x...???
                             if (UInt64.TryParse(UIDasString, NumberStyles.HexNumber, CultureInfo.InvariantCulture, out var UID)) {
-                                return Results.Ok<INode>(new UIDNode(UID));
+                                return Results.Ok<(INode, bool)>((new UIDNode(UID),false));
                             }
-                            result = addErr(result, Results.Fail<INode>("Failed to parse UID : " + UIDasString));
+                            result = addErr(result, Results.Fail<(INode, bool)>("Failed to parse UID : " + UIDasString));
                             continue;
                         }
-                        result = addErr(result, err.ConvertToResultWithValueType<INode>());
+                        result = addErr(result, err.ConvertToResultWithValueType<(INode, bool)>());
                         continue;
                     } else {
                         var UIDasString = queryResult.Value
@@ -153,9 +153,9 @@ namespace DgraphDotNet {
                             .Replace("\"}]}", string.Empty);
 
                         if (UInt64.TryParse(UIDasString, NumberStyles.HexNumber, CultureInfo.InvariantCulture, out var UID)) {
-                            return Results.Ok<INode>(new UIDNode(UID));
+                            return Results.Ok<(INode, bool)>((new UIDNode(UID),true));
                         }
-                        result = addErr(result, Results.Fail<INode>("Failed to parse UID : " + UIDasString));
+                        result = addErr(result, Results.Fail<(INode, bool)>("Failed to parse UID : " + UIDasString));
                         continue;
                     }
                 }

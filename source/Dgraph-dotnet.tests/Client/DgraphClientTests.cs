@@ -29,10 +29,12 @@ namespace Dgraph_dotnet.tests.Client {
             txn.Mutate(Arg.Any<string>()).Returns(Results.Ok<IDictionary<string, string>>(new Dictionary<string, string> { { "upsertNode", "0x1bf" } }));
             txn.Commit().Returns(Results.Ok());
 
-            var node = client.Upsert("aPredicate", GraphValue.BuildStringValue("aString"));
+            var result = client.Upsert("aPredicate", GraphValue.BuildStringValue("aString"));
 
-            Assert.IsTrue(node.IsSuccess);
-            switch (node.Value) {
+            Assert.IsTrue(result.IsSuccess);
+            var (node,existed) = result.Value;
+            Assert.IsFalse(existed);
+            switch (node) {
                 case UIDNode uidnode:
                     Assert.AreEqual((ulong) 447, uidnode.UID);
                     break;
@@ -49,10 +51,12 @@ namespace Dgraph_dotnet.tests.Client {
 
             txn.Query(Arg.Any<string>()).Returns(Results.Ok<string>("{\"q\":[{\"uid\":\"0x1bf\"}]}"));
 
-            var node = client.Upsert("aPredicate", GraphValue.BuildStringValue("aString"));
+            var result = client.Upsert("aPredicate", GraphValue.BuildStringValue("aString"));
 
-            Assert.IsTrue(node.IsSuccess);
-            switch (node.Value) {
+            Assert.IsTrue(result.IsSuccess);
+            var (node,existed) = result.Value;
+            Assert.IsTrue(existed);
+            switch (node) {
                 case UIDNode uidnode:
                     Assert.AreEqual((ulong) 447, uidnode.UID);
                     break;
@@ -71,10 +75,12 @@ namespace Dgraph_dotnet.tests.Client {
             txn.Mutate(Arg.Any<string>()).Returns(Results.Ok<IDictionary<string, string>>(new Dictionary<string, string> { { "upsertNode", "0xfff" } }));
             txn.Commit().Returns(Results.Fail("This transaction had a conflict"));
 
-            var node = client.Upsert("aPredicate", GraphValue.BuildStringValue("aString"));
+            var result = client.Upsert("aPredicate", GraphValue.BuildStringValue("aString"));
 
-            Assert.IsTrue(node.IsSuccess);
-            switch (node.Value) {
+            Assert.IsTrue(result.IsSuccess);
+            var (node,existed) = result.Value;
+            Assert.IsTrue(existed);
+            switch (node) {
                 case UIDNode uidnode:
                     Assert.AreEqual((ulong) 447, uidnode.UID);
                     break;
