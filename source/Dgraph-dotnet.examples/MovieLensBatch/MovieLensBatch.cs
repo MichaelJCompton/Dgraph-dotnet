@@ -1,10 +1,19 @@
-﻿// this is based on an example I wrote for Dgraph version 0.8
-// https://github.com/dgraph-io/dgraph/tree/release/v0.8.0/wiki/resources/examples/goclient/movielensbatch
-//
-// data comes from http://grouplens.org/datasets/movielens/100k/
-// http://files.grouplens.org/datasets/movielens/ml-100k.zip
-// run the script in ./data to download and prepare data 
-// FIXME: add a runscript ... or atleas instructions
+﻿/** 
+ * Example of using Dgraph client with a batching client.  This is based on an
+ * example I wrote for Dgraph version 0.8
+ * https://github.com/dgraph-io/dgraph/tree/release/v0.8.0/wiki/resources/examples/goclient/movielensbatch
+ *
+ * Data comes from http://grouplens.org/datasets/movielens/100k/
+ * http://files.grouplens.org/datasets/movielens/ml-100k.zip
+ *
+ * Running :
+ *  1) run the script in ./data to download data 
+ *  1) start up dgraph (e.g. see ../scripts/server.sh)
+ *  2) dotnet run
+ *
+ */
+
+
 
 using System;
 using System.Collections.Generic;
@@ -42,6 +51,10 @@ namespace BatchExample {
                     var cancelToken = new CancellationTokenSource();
                     var ticker = RunTicker(cancelToken.Token);
 
+                    // Read all files in parallel.
+                    //
+                    // Client correctly creates and links the nodes, no matter
+                    // what order they are read in.
                     Task.WaitAll(
                         ProcessGenres(client),
                         ProcessUsers(client),
@@ -69,7 +82,8 @@ namespace BatchExample {
                 //
                 // genre-name|genreID
                 //
-                // We'll use a blank node named "genre<genreID>" to identify each genre node
+                // We'll use a client-side node named "genre<genreID>" to identify each genre node.
+                // That name isn't persisted in the store in this example, it's just for client-side reference.
                 using(FileStream fs = new FileStream(genreFile, FileMode.Open)) {
                     using(StreamReader genres = new StreamReader(fs)) {
                         string line;
@@ -100,7 +114,7 @@ namespace BatchExample {
                 //
                 // userID|age|genre|occupation|ZIPcode
                 //
-                // We'll use a blank node named "user<userID>" to identify each user node
+                // We'll use a node named "user<userID>" to identify each user node
                 using(FileStream fs = new FileStream(userFile, FileMode.Open)) {
                     using(StreamReader users = new StreamReader(fs)) {
                         string line;
@@ -137,7 +151,7 @@ namespace BatchExample {
                 //
                 // movieID|movie-name|date||imdb-address|genre0?|genre1?|...|genre18?
                 //
-                // We'll use "movie<movieID>" as the blank node name
+                // We'll use "movie<movieID>" as the node name
                 using(FileStream fs = new FileStream(movieFile, FileMode.Open)) {
                     using(StreamReader movies = new StreamReader(fs)) {
                         string line;
