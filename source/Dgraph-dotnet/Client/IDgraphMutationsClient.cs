@@ -2,14 +2,6 @@ using System.Collections.Generic;
 using DgraphDotNet.Graph;
 using DgraphDotNet.Transactions;
 
-/* 
- * service Zero {
- *  ...
- *  rpc AssignUids (Num) returns (api.AssignedIds) {}
- *  ...
- * }
- */
-
 namespace DgraphDotNet {
 
     /// <summary>

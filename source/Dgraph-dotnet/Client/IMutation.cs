@@ -7,8 +7,7 @@ namespace DgraphDotNet {
     /// <summary>
     /// Encapsulates  mutations to be sent to the backend Dgraph store.  A
     /// mutation must be made as part of a transaction.  Mutationsations are not
-    /// sent to the store until the request is executed with <see
-    /// cref="Transaction.Submit()"/>.  
+    /// sent to the store until executed with <see cref="Submit()"/>
     /// </summary>
     public interface IMutation {
         /// <summary>

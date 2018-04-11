@@ -6,6 +6,7 @@ using Google.Protobuf;
 using static Api.Value;
 
 namespace DgraphDotNet.Graph {
+    
     public class GraphValue : IEdgeTarget {
 
         internal readonly Api.Value Value = new Api.Value();

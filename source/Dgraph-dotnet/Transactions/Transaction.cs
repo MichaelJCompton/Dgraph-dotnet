@@ -27,7 +27,7 @@ if(...) {
 
 or
 
-client.Query(....) without a transaction
+client.Query(....) without a transaction  ??
 */
 
 

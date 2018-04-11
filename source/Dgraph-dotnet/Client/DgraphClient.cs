@@ -21,13 +21,6 @@ using Grpc.Core;
  *
  */
 
-// For unit testing.  Allows to make mocks of the internal interfaces and factories
-// so can test in isolation from a Dgraph instance.
-//
-// When I put this in an AssemblyInfo.cs it wouldn't compile any more.
-[assembly : System.Runtime.CompilerServices.InternalsVisibleTo("Dgraph-dotnet.tests")]
-[assembly : System.Runtime.CompilerServices.InternalsVisibleTo("DynamicProxyGenAssembly2")] // for NSubstitute
-
 namespace DgraphDotNet {
 
     internal class DgraphClient : IDgraphClient {
@@ -46,6 +39,7 @@ namespace DgraphDotNet {
         //                   Connections
         // ------------------------------------------------------
         //
+
         #region Connections
 
         private readonly ConcurrentDictionary<string, IGRPCConnection> connections = new ConcurrentDictionary<string, IGRPCConnection>();
@@ -86,6 +80,7 @@ namespace DgraphDotNet {
         //                   Transactions
         // ------------------------------------------------------
         //
+
         #region transactions
 
         private LinRead linRead;
@@ -98,7 +93,8 @@ namespace DgraphDotNet {
 
             var op = new Api.Operation();
             op.Schema = newSchema;
-            connections.Values.FirstOrDefault().Alter(op);
+
+            connections.Values.ElementAt(rnd.Next(connections.Count)).Alter(op);
         }
 
         public ITransaction NewTransaction() {
@@ -108,6 +104,8 @@ namespace DgraphDotNet {
         }
 
         public FluentResults.Result<INode> Upsert(string predicate, GraphValue value, int maxRetrys = 1) {
+            AssertNotDisposed();
+
             var query = $"{{ q(func: eq({predicate}, \"{value.ToString()}\")) {{ uid }} }}";
             var newNodeBlankName = "upsertNode";
 
@@ -227,20 +225,12 @@ namespace DgraphDotNet {
         bool disposed; // = false;
         protected bool Disposed => disposed;
 
-        /// <summary>
-        /// Asserts that instance is not disposed.
-        /// </summary>
-        /// <exception cref="System.ObjectDisposedException">Thrown if the client has been disposed.</exception>
         protected void AssertNotDisposed() {
             if (Disposed) {
                 throw new ObjectDisposedException(GetType().Name);
             }
         }
 
-        /// <summary>
-        /// Close all connections.  It is an error to call any client functions after a call to 
-        /// <c>Dispose()</c> and such calls result in an ObjectDisposedException.
-        /// </summary>
         public void Dispose() {
             DisposeIDisposables();
         }

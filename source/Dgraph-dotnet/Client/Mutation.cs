@@ -87,6 +87,14 @@ namespace DgraphDotNet {
             return (edges, properties);
         }
 
+        // 
+        // ------------------------------------------------------
+        //              Privates
+        // ------------------------------------------------------
+        //
+
+        #region Privates
+
         private void AddFromNQuad(NQuad nquad, List<Edge> edges, List<Property> properties) {
             if (nquad.ObjectId != null) {
                 INode source = nquad.ObjectId.StartsWith("_:")
@@ -103,13 +111,6 @@ namespace DgraphDotNet {
                 properties.Add(Clients.BuildProperty(source, nquad.Predicate, GraphValue.BuildFromValue(nquad.ObjectValue)).Value);
             }
         }
-
-        // 
-        // ------------------------------------------------------
-        //              Privates
-        // ------------------------------------------------------
-        //
-        #region helpers
 
         private void DealWithEdge(Edge edge, Action<NQuad> placeNQuad) {
             NQuad nquad = BuildNQuadFromEdge(edge);

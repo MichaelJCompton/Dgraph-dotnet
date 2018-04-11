@@ -4,7 +4,7 @@ using System.Diagnostics;
 using System.Linq;
 using Api;
 using FluentResults; // Generated library from Dgraph protos files (see project DgraphgRPC)
-using Intern; // Dgraph inernal libarary
+using Intern; // Dgraph inernal libarary for calls to zero
 
 using System.Collections.Concurrent;
 using System.Threading;
@@ -146,7 +146,7 @@ namespace DgraphDotNet {
 
 			// dial the known zero and allocate a new range
 
-			// the dgraph code seems to dial, hold a connection and then mint
+			// the dgraph go code seems to dial, hold a connection and then mint
 			// up a new connection if the last fails.  For the moment
 			// I'll probably just have the one zero .. but it should be done
 			// better than this.

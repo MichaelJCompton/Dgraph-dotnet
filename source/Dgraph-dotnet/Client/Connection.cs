@@ -7,16 +7,15 @@ namespace DgraphDotNet {
 
 	internal interface IGRPCConnection : IDisposable {
 		Status LastKnownStatus { get; set; }
-
-        void Alter(Api.Operation op);
-        Response Query(Api.Request req);
-        Assigned Mutate(Api.Mutation mut);
-        void Commit(TxnContext context);
-        void Discard(TxnContext context);
-    }
+		void Alter(Api.Operation op);
+		Response Query(Api.Request req);
+		Assigned Mutate(Api.Mutation mut);
+		void Commit(TxnContext context);
+		void Discard(TxnContext context);
+	}
 
 	/// <summary>
-	/// a gRPC connection wrapping a <c>Protos.Dgraph.DgraphClient</c>.  
+	/// A gRPC connection wrapping a <c>Protos.Dgraph.DgraphClient</c>.  
 	/// Doesn't check for rpcExceptions or other failures --- it's the job of the calling
 	/// classes to know what to do if a connection is faulty.
 	/// </summary>
@@ -50,6 +49,8 @@ namespace DgraphDotNet {
 
 		// FIXME: should allow cancellation tokens, deadlines, etc??
 
+		#region mutations
+
 		public void Alter(Api.Operation op) {
 			AssertNotDisposed();
 
@@ -80,6 +81,8 @@ namespace DgraphDotNet {
 			connection.CommitOrAbort(context);
 		}
 
+		#endregion
+
 		// 
 		// ------------------------------------------------------
 		//              disposable pattern.
@@ -98,10 +101,6 @@ namespace DgraphDotNet {
 
 		private bool disposed; // = false;
 
-		/// <summary>
-		/// Asserts that instance is not disposed.
-		/// </summary>
-		/// <exception cref="System.ObjectDisposedException">Thrown if the connection has been disposed.</exception>
 		protected void AssertNotDisposed() {
 			if (this.disposed) {
 				throw new ObjectDisposedException(GetType().Name);
@@ -111,7 +110,7 @@ namespace DgraphDotNet {
 		public void Dispose() {
 			if (!this.disposed) {
 				// returns a Task, but ignoring
-				channel.ShutdownAsync();  // exceptions ???
+				channel.ShutdownAsync(); // exceptions ???
 			}
 			this.disposed = true;
 		}

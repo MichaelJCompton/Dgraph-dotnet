@@ -1,18 +1,20 @@
-// For unit testing.  Allows to make mocks of the internal interfaces and factories
-// so can test in isolation from a Dgraph instance.
-//
-// When I put this in an AssemblyInfo.cs it wouldn't compile any more.
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using DgraphDotNet.Graph;
 using DgraphDotNet.Transactions;
 
+// For unit testing.  Allows to make mocks of the internal interfaces and factories
+// so can test in isolation from a Dgraph instance.
+//
+// When I put this in an AssemblyInfo.cs it wouldn't compile any more.
 [assembly : System.Runtime.CompilerServices.InternalsVisibleTo("Dgraph-dotnet.tests")]
 [assembly : System.Runtime.CompilerServices.InternalsVisibleTo("DynamicProxyGenAssembly2")] // for NSubstitute
 
 namespace DgraphDotNet {
     public class Clients {
+
+        #region ClientBuilders
 
         /// <summary>
         /// Create a client that can do query and JSON mutations.
@@ -52,11 +54,14 @@ namespace DgraphDotNet {
             return client;
         }
 
+        #endregion
+
         // 
         // ------------------------------------------------------
         //                      Edges 
         // ------------------------------------------------------
         //
+
         #region Edges
 
         /// <summary>
@@ -102,7 +107,7 @@ namespace DgraphDotNet {
 
         // Add the facets ignoring any null or "".
         // 
-        // Pre : edge != null and not disposed
+        // Pre : edge != null
         private static void AddFacetsToLink<TargetType>(GraphLink<TargetType> edge, IDictionary<string, string> facets) where TargetType : IEdgeTarget {
             Debug.Assert(edge != null);
 
@@ -114,6 +119,8 @@ namespace DgraphDotNet {
                 }
             }
         }
+
         #endregion
+
     }
 }

@@ -4,6 +4,10 @@ using System.Diagnostics;
 using Api;
 
 namespace DgraphDotNet.Graph {
+
+    /// <summary>
+    /// A link in the graph: for either node->node or node->value
+    /// </summary>
     public abstract class GraphLink<T> where T : IEdgeTarget {
 
         public INode Source { get; }

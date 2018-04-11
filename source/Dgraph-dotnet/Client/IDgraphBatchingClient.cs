@@ -1,9 +1,17 @@
 using System.Collections.Generic;
 using DgraphDotNet.Graph;
 
-namespace DgraphDotNet
-{
-    public interface IDgraphBatchingClient : IDgraphMutationsClient {
+namespace DgraphDotNet {
+
+	/// <summary>
+	/// This type of client can also internally mange batches of mutations. Just
+	/// throw the edges in and the client manages all the Dgraph mutations and
+	/// communications.  If something fails, the failed edges can be retrieved
+	/// and retried.
+	/// </summary>
+	/// <exception cref="System.ObjectDisposedException">Thrown if the client
+	/// has been disposed and calls are made.</exception>
+	public interface IDgraphBatchingClient : IDgraphMutationsClient {
 
 		/// <summary>
 		/// Add the edge to a pending batch.  
@@ -41,7 +49,6 @@ namespace DgraphDotNet
 		/// ((AddedEdges, AddedPropeties), (DeletedEdges, DeletedProperties))
 		/// </summary>
 		((List<Edge>, List<Property>), (List<Edge>, List<Property>)) AllLinksFromFailedMutations();
-
 
 		/// <summary>
 		/// Flushs all pending batches.  This call assures that all batches
