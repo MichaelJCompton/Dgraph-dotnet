@@ -4,7 +4,7 @@
 
 nuget install Grpc.Tools -Version 1.7.1 -OutputDirectory artifacts
 
-git clone --branch v1.0.3 --depth 1 https://github.com/dgraph-io/dgraph artifacts/dgraph
+git clone --branch v1.0.4 --depth 1 https://github.com/dgraph-io/dgraph artifacts/dgraph
 
 artifacts/Grpc.Tools.1.7.1/tools/macosx_x64/protoc -I artifacts/dgraph/protos \
     --csharp_out source/Dgraph-dotnet/DgraphAPI \
