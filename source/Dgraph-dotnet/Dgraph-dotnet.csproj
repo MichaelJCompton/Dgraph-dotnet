@@ -10,6 +10,7 @@
     <Company>Michael Compton Pty Ltd</Company>
     <Product>.Net Dgraph Client</Product>
     <Description>.Net client library for Dgraph</Description>
+    <Copyright>Michael Compton</Copyright>
     <PackageProjectUrl>https://github.com/MichaelJCompton/Dgraph-dotnet</PackageProjectUrl>
     <RepositoryUrl>https://github.com/MichaelJCompton/Dgraph-dotnet</RepositoryUrl>
     <IncludeSymbols>True</IncludeSymbols>
