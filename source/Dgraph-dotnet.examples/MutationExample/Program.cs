@@ -60,6 +60,7 @@ namespace MutationExamples {
                                 // ... something went wrong
                             }
                         }
+                        txn.Commit();
                     }
                 }
             }
