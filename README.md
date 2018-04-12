@@ -126,7 +126,7 @@ Check out the example in `source/Dgraph-dotnet.examples/MutationExample`.
 
 ### Edges in batches
 
-If you want to throw edges at Dgraph asynchronously then add them to batches and the client handles the rest.
+If you want to throw edges at Dgraph asynchronously, then add edges/properties to batches and the client handles the rest.
 
 Make a batching client
 
@@ -175,9 +175,9 @@ If you need to create nodes with unique identifying edges, then you'll need to u
 
 ## Building
 
-The required `.cs` files built from the Dgraph protos files aren't distributed with this source.
+To use the client, just include [Dgraph-dotnet](https://www.nuget.org/packages/Dgraph-dotnet/) NuGet package in you project.
 
-Clone the repo and run the cake build (currently only working on bash) with `./build.sh`.  That will clone the appropriate version of Dgraph and build the required `.cs` sources from the Dgraph protos into `source/Dgraph-dotnet/DgraphAPI`.  You can also just run `./scripts/getDgraph.sh` from the project root directory to clone dgraph and generate from protos, without building the Dgraph-dotnet library.  
+To build, clone the repo and run the cake build (currently only working on bash) with `./build.sh`.  The required `.cs` files built from the Dgraph protos files aren't distributed with this source. The build process will clone the appropriate version of Dgraph and build the required `.cs` sources from the Dgraph protos into `source/Dgraph-dotnet/DgraphAPI`.  You can also just run `./scripts/getDgraph.sh` from the project root directory to clone dgraph and generate from protos, without building the Dgraph-dotnet library.  
 
 ## Contributing
 
