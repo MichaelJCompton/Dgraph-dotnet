@@ -12,4 +12,4 @@ echo "Building C# protos files"
 artifacts/Grpc.Tools.1.7.1/tools/macosx_x64/protoc -I artifacts/dgraph/protos -I artifacts/dgo/protos \
     --csharp_out source/Dgraph-dotnet/DgraphAPI \
     --grpc_out source/Dgraph-dotnet/DgraphAPI artifacts/dgraph/protos/*.proto artifacts/dgo/protos/*.proto \
-    --plugin=protoc-gen-grpc=artifacts/Grpc.Tools.1.7.1/tools/maco
+    --plugin=protoc-gen-grpc=artifacts/Grpc.Tools.1.7.1/tools/macosx_x64/grpc_csharp_plugin
