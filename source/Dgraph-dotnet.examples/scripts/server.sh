@@ -15,7 +15,7 @@ start() {
 
     sleep 5s
     
-    dgraph server -p dgraph/p -w dgraph/w --memory_mb 4096 --zero localhost:5080 > dgraph/server.log 2>&1 &
+    dgraph server -p dgraph/p -w dgraph/w --lru_mb 2048 --zero localhost:5080 > dgraph/server.log 2>&1 &
 }
 
 stop() {
