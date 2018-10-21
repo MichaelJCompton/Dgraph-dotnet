@@ -45,6 +45,13 @@ namespace BatchExample {
                 using(IDgraphBatchingClient client = DgraphDotNet.Clients.NewDgraphBatchingClient("127.0.0.1:5080")) {
                     client.Connect("127.0.0.1:9080");
 
+                    var version = client.CheckVersion();
+                    if(version.IsSuccess) {
+                        Console.WriteLine($"Connected to Dgraph (version {version.Value})");
+                    } else {
+                        Console.WriteLine($"Unable to read Dgraph version ({version})");
+                    }
+
                     var schema = System.IO.File.ReadAllText(schemaFile);
                     client.AlterSchema(schema);
 

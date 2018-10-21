@@ -38,6 +38,11 @@ namespace DgraphDotNet {
         /// </summary>
         void AlterSchema(string newSchema);
 
+        /// <summary>
+        /// Returns the Dgraph version string.
+        /// </summary>
+        FluentResults.Result<string> CheckVersion();
+
         ITransaction NewTransaction();
 
         /// <summary>

@@ -8,6 +8,7 @@ namespace DgraphDotNet {
 	internal interface IGRPCConnection : IDisposable {
 		Status LastKnownStatus { get; set; }
 		void Alter(Api.Operation op);
+        Api.Version CheckVersion();
 		Response Query(Api.Request req);
 		Assigned Mutate(Api.Mutation mut);
 		void Commit(TxnContext context);
@@ -55,6 +56,12 @@ namespace DgraphDotNet {
 			AssertNotDisposed();
 
 			connection.Alter(op);
+		}
+
+		public Api.Version CheckVersion() {
+			AssertNotDisposed();
+
+			return connection.CheckVersion(new Check());
 		}
 
 		public Response Query(Api.Request req) {

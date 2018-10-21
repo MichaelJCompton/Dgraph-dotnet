@@ -97,6 +97,14 @@ namespace DgraphDotNet {
             connections.Values.ElementAt(rnd.Next(connections.Count)).Alter(op);
         }
 
+        public FluentResults.Result<string> CheckVersion() {
+            AssertNotDisposed();
+
+            var versionResult = connections.Values.ElementAt(rnd.Next(connections.Count)).CheckVersion();
+
+            return Results.Ok<string>(versionResult.Tag);
+        }
+
         public ITransaction NewTransaction() {
             AssertNotDisposed();
 
