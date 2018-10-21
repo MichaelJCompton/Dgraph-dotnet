@@ -16,6 +16,8 @@ Versions of this library match up to Dgraph versions as follows:
 | -------- | ------ |
 | v0.1.0 | v1.0.3 |
 | v0.2.0 | v1.0.4 |
+| v0.3.0 | v1.0.5 |
+| v0.4.0 | v1.0.9 |
 
 ## Table of Contents
 - [Getting](#obtaining-the-library)

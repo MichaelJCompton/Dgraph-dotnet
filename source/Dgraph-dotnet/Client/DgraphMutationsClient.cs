@@ -4,7 +4,7 @@ using System.Diagnostics;
 using System.Linq;
 using Api;
 using FluentResults; // Generated library from Dgraph protos files (see project DgraphgRPC)
-using Intern; // Dgraph inernal libarary for calls to zero
+using Pb; // Dgraph inernal libarary for calls to zero
 
 using System.Collections.Concurrent;
 using System.Threading;
@@ -43,7 +43,7 @@ namespace DgraphDotNet {
 		private string zeroAddr;
 
 		Channel zeroChannel;
-		Intern.Zero.ZeroClient zeroClient;
+		Zero.ZeroClient zeroClient;
 
 		internal DgraphMutationsClient(IGRPCConnectionFactory connectionFactory, ITransactionFactory transactionFactory) : base(connectionFactory, transactionFactory) {
 
@@ -161,9 +161,9 @@ namespace DgraphDotNet {
 			try {
 				if (zeroChannel == null || zeroClient == null) {
 					zeroChannel = new Channel(zeroAddr, ChannelCredentials.Insecure);
-					zeroClient = new Intern.Zero.ZeroClient(zeroChannel);
+					zeroClient = new Zero.ZeroClient(zeroChannel);
 				}
-				var assigned = zeroClient.AssignUids(new Intern.Num() { Val = 1000 });
+				var assigned = zeroClient.AssignUids(new Pb.Num() { Val = 1000 });
 				uidCurrent = assigned.StartId;
 				uidMaxAllocated = assigned.EndId;
 				return FluentResults.Results.Ok<ulong>(uidCurrent++);
