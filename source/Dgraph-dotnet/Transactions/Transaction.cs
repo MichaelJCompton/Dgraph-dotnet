@@ -1,7 +1,9 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text;
 using Api;
+using DgraphDotNet.DgraphSchema;
 using FluentResults;
 using Grpc.Core;
 
@@ -29,8 +31,6 @@ or
 
 client.Query(....) without a transaction  ??
 */
-
-
 
 namespace DgraphDotNet.Transactions {
 
@@ -97,6 +97,20 @@ namespace DgraphDotNet.Transactions {
             } catch (RpcException rpcEx) {
                 return Results.Fail<string>(new FluentResults.ExceptionalError(rpcEx));
             }
+        }
+
+        public FluentResults.Result<IReadOnlyList<DrgaphPredicate>> SchemaQuery() {
+            return SchemaQuery("schema { }");
+        }
+
+        public FluentResults.Result<IReadOnlyList<DrgaphPredicate>> SchemaQuery(string schemaQuery) {
+            var result = Query(schemaQuery);
+            if (result.IsFailed) {
+                return result.ConvertToResultWithValueType<IReadOnlyList<DrgaphPredicate>>();
+            }
+            return Results.Ok<IReadOnlyList<DrgaphPredicate>>(
+                lastQueryResponse.Schema.Select(sn =>
+                    new DrgaphPredicate(sn.Predicate, sn.Type, sn.Tokenizer, sn.Reverse, sn.Count, sn.List, sn.Upsert, sn.Lang)).ToList());
         }
 
         public FluentResults.Result<IDictionary<string, string>> Mutate(string json) {

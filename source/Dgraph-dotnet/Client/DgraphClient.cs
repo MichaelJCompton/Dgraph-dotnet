@@ -4,22 +4,11 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
 using Api;
+using DgraphDotNet.DgraphSchema;
 using DgraphDotNet.Graph;
 using DgraphDotNet.Transactions;
 using FluentResults;
 using Grpc.Core;
-
-/*
- *
- *  service Dgraph {
- *	  rpc Query (Request)            returns (Response) {}
- *    rpc Mutate (Mutation)          returns (Assigned) {}
- *    rpc Alter (Operation)          returns (Payload) {}
- *    rpc CommitOrAbort (TxnContext) returns (TxnContext) {}
- *    rpc CheckVersion(Check)        returns (Version) {}
- *  }
- *
- */
 
 namespace DgraphDotNet {
 
@@ -103,6 +92,28 @@ namespace DgraphDotNet {
             var versionResult = connections.Values.ElementAt(rnd.Next(connections.Count)).CheckVersion();
 
             return Results.Ok<string>(versionResult.Tag);
+        }
+
+        public FluentResults.Result<IReadOnlyList<DrgaphPredicate>> SchemaQuery() {
+            return SchemaQuery("schema { }");
+        }
+
+        public FluentResults.Result<IReadOnlyList<DrgaphPredicate>> SchemaQuery(string schemaQuery) {
+            using(var transaction = NewTransaction()) {
+                return transaction.SchemaQuery(schemaQuery);
+            }
+        }
+
+        public FluentResults.Result<string> Query(string queryString) {
+            AssertNotDisposed();
+
+            return QueryWithVars(queryString, new Dictionary<string, string>());
+        }
+
+        public FluentResults.Result<string> QueryWithVars(string queryString, Dictionary<string, string> varMap) {
+            using(var transaction = NewTransaction()) {
+                return transaction.QueryWithVars(queryString, varMap);
+            }
         }
 
         public ITransaction NewTransaction() {

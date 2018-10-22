@@ -1,7 +1,20 @@
 using System;
 using System.Collections.Generic;
+using DgraphDotNet.DgraphSchema;
 using DgraphDotNet.Graph;
 using DgraphDotNet.Transactions;
+
+/*
+ *
+ *  service Dgraph {
+ *	  rpc Query (Request)            returns (Response) {}
+ *    rpc Mutate (Mutation)          returns (Assigned) {}
+ *    rpc Alter (Operation)          returns (Payload) {}
+ *    rpc CommitOrAbort (TxnContext) returns (TxnContext) {}
+ *    rpc CheckVersion(Check)        returns (Version) {}
+ *  }
+ *
+ */
 
 namespace DgraphDotNet {
 
@@ -15,7 +28,7 @@ namespace DgraphDotNet {
     /// </summary>
     /// <exception cref="System.ObjectDisposedException">Thrown if the client
     /// has been disposed and calls are made.</exception>
-    public interface IDgraphClient : IDisposable {
+    public interface IDgraphClient : IDisposable, IQuery {
 
         /// <summary>
         /// Connect to a backend Dgraph instance.  Multiple connections can be

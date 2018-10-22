@@ -55,6 +55,17 @@ namespace BatchExample {
                     var schema = System.IO.File.ReadAllText(schemaFile);
                     client.AlterSchema(schema);
 
+                    // How to query schema
+                    var result = client.SchemaQuery("schema { }");
+                    if(result.IsFailed) {
+                        Console.WriteLine("Something went wrong : " + result);
+                        System.Environment.Exit(1);
+                    }
+                    Console.WriteLine("schema is : ");
+                    foreach(var predicate in result.Value) {
+                        Console.WriteLine(predicate);
+                    }
+
                     var cancelToken = new CancellationTokenSource();
                     var ticker = RunTicker(cancelToken.Token);
 
@@ -75,7 +86,7 @@ namespace BatchExample {
                 }
 
                 Console.WriteLine("All files processed.");
-                Console.WriteLine(numProcessed + " lines read from files.");
+                Console.WriteLine(numProcessed + " lines read from files."); 
             } catch (Exception e) {
                 Console.WriteLine("Error creating database");
                 Console.WriteLine(e.Message);
