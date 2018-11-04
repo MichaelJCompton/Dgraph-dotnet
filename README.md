@@ -20,9 +20,9 @@ Versions of this library match up to Dgraph versions as follows:
 | v0.4.0 .. v0.4.2 | v1.0.9 |
 
 ## Table of Contents
-- [Getting](#obtaining-the-library)
-- [Learning](#examples)
-- [Using](#examples)
+- [Getting](#getting)
+- [Learning](#learning)
+- [Using](#using)
     * [Objects and JSON](#objects-and-json)
     * [Graph edges and mutations](#graph-edges-and-mutations)
     * [Edges in batches](#edges-in-batches)
