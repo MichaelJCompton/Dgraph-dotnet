@@ -20,9 +20,9 @@ Versions of this library match up to Dgraph versions as follows:
 | v0.4.0 .. v0.4.2 | v1.0.9 |
 
 ## Table of Contents
-- [Getting](#obtaining-the-library)
-- [Learning](#examples)
-- [Using](#examples)
+- [Getting](#getting)
+- [Learning](#learning)
+- [Using](#using)
     * [Objects and JSON](#objects-and-json)
     * [Graph edges and mutations](#graph-edges-and-mutations)
     * [Edges in batches](#edges-in-batches)
@@ -53,7 +53,7 @@ Use your favourite JSON serialization library.
 
 Have an object model
 
-```
+```c#
 public class Person
 {
     public string uid { get; set; }
@@ -65,14 +65,14 @@ public class Person
 
 Make a new client
 
-```
+```c#
 using(var client = DgraphDotNet.Clients.NewDgraphClient()) {
     client.Connect("127.0.0.1:9080");
 ```
 
 Grab a transaction, serialize your object model to JSON, mutate the graph and commit the transaction.
 
-```
+```c#
     using(var transaction = client.NewTransaction()) {
         var json = ...serialize your object model...
         transaction.Mutate(json);
@@ -82,7 +82,7 @@ Grab a transaction, serialize your object model to JSON, mutate the graph and co
 
 Or to query the graph.
 
-```
+```c#
     using(var transaction = client.NewTransaction()) {
         var res = transaction.Query(query);
         
@@ -100,14 +100,14 @@ If you want to form mutations based on edge additions and deletions.
 
 Make a mutations client giving it the address of the zero node.
 
-```
+```c#
 using(IDgraphMutationsClient client = DgraphDotNet.Clients.NewDgraphMutationsClient("127.0.0.1:5080")) {
     client.Connect("127.0.0.1:9080");
 ```
 
 Grab a transaction, add as many edge edges/properties to a mutation as required, submit the mutation, commit the transaction when done.
 
-```
+```c#
     using(var txn = client.NewTransactionWithMutations()) {
         var mutation = txn.NewMutation();
         var node = NewNode().Value;
@@ -132,14 +132,14 @@ If you want to throw edges at Dgraph asynchronously, then add edges/properties t
 
 Make a batching client
 
-```
+```c#
 using(IDgraphBatchingClient client = DgraphDotNet.Clients.NewDgraphBatchingClient("127.0.0.1:5080")) {
     client.Connect("127.0.0.1:9080");
 ```
 
 Throw in edges
 
-```
+```c#
     var node = client.GetOrCreateNode("some-node");
     if (node.IsSuccess) {
         var property = Clients.BuildProperty(node.Value, "name", GraphValue.BuildStringValue("AName));
@@ -159,7 +159,7 @@ No need to create or submit transactions; the client batches the edges up into t
 
 When done, flush out any remaning batches
 
-```
+```c#
     client.FlushBatches();
 ```                                                
 
