@@ -4,7 +4,7 @@
 
 nuget install Grpc.Tools -Version 1.7.1 -OutputDirectory artifacts
 
-git clone --branch v1.0.9 --depth 1 https://github.com/dgraph-io/dgraph artifacts/dgraph
+git clone --branch v1.0.13 --depth 1 https://github.com/dgraph-io/dgraph artifacts/dgraph
 git clone --branch master --depth 1 https://github.com/dgraph-io/dgo artifacts/dgo
 
 echo "Building C# protos files"
