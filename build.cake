@@ -49,7 +49,7 @@ Setup(ctx =>
 
 Teardown(ctx =>
 {
-    CleanDirectory(artifactsPath);
+    // CleanDirectory(artifactsPath);
 });
 
 
@@ -85,7 +85,7 @@ Task("GetDgraph")
 
 Task("Build")
     .IsDependentOn("Clean")
-    .IsDependentOn("GetDgraph")
+    //.IsDependentOn("GetDgraph")
     .Does(() => 
     {
         // ReplaceRegexInFiles("...file name...", "version = \"[^\"]+", "version = \"" + nugetVersion);
