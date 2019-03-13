@@ -63,7 +63,7 @@ namespace ObjectsExample {
                 client.Connect("127.0.0.1:9080");
 
                 client.AlterSchema(
-                    "Name: string @index(term) .\n"
+                    "Name: string @lang @index(term) .\n"
                     + "DOB: dateTime .\n"
                     + "Friends: uid @count .");
 
