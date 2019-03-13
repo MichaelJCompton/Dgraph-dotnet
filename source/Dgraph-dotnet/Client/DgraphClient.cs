@@ -33,14 +33,14 @@ namespace DgraphDotNet {
 
         private readonly ConcurrentDictionary<string, IGRPCConnection> connections = new ConcurrentDictionary<string, IGRPCConnection>();
 
-        public void Connect(string address) {
+        public void Connect(string address, ChannelCredentials credentials = null, IEnumerable<ChannelOption> options = null) {
             AssertNotDisposed();
 
             if (!string.IsNullOrEmpty(address)) {
                 if (connections.TryGetValue(address, out IGRPCConnection connection)) {
                     connection.LastKnownStatus = Status.DefaultSuccess;
                 } else {
-                    if (connectionFactory.TryConnect(address, out connection)) {
+                    if (connectionFactory.TryConnect(address, out connection, credentials, options)) {
                         if (!connections.TryAdd(address, connection)) {
                             // another thread wrote in between.  That means there 
                             // is already a connection for this address, so 

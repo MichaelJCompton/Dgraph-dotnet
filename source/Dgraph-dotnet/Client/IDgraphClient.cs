@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using DgraphDotNet.DgraphSchema;
 using DgraphDotNet.Graph;
 using DgraphDotNet.Transactions;
+using Grpc.Core;
 
 /*
  *
@@ -42,7 +43,7 @@ namespace DgraphDotNet {
         /// or submitting an <see cref="ITransaction"/> any one of the
         /// connections is used.
         /// </remarks>
-        void Connect(string address);
+        void Connect(string address, ChannelCredentials credentials = null, IEnumerable<ChannelOption> options = null);
 
         IEnumerable<string> AllConnections();
 
