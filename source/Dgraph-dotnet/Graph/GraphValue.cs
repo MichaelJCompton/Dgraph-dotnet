@@ -3,7 +3,7 @@ using System.Diagnostics;
 using System.Globalization;
 using System.Text;
 using Google.Protobuf;
-using static Api.Value;
+using Api;
 
 namespace DgraphDotNet.Graph {
     
@@ -119,27 +119,27 @@ namespace DgraphDotNet.Graph {
 
         public override string ToString() {
             switch (Value.ValCase) {
-                case ValOneofCase.DefaultVal:
+                case Value.ValOneofCase.DefaultVal:
                     return Value.DefaultVal;
-                case ValOneofCase.BytesVal:
+                case Value.ValOneofCase.BytesVal:
                     return Value.BytesVal.ToStringUtf8();
-                case ValOneofCase.IntVal:
+                case Value.ValOneofCase.IntVal:
                     return Value.IntVal.ToString();
-                case ValOneofCase.BoolVal:
+                case Value.ValOneofCase.BoolVal:
                     return Value.BoolVal.ToString();
-                case ValOneofCase.StrVal:
+                case Value.ValOneofCase.StrVal:
                     return Value.StrVal;
-                case ValOneofCase.DoubleVal:
+                case Value.ValOneofCase.DoubleVal:
                     return Value.DoubleVal.ToString();
-                case ValOneofCase.GeoVal:
+                case Value.ValOneofCase.GeoVal:
                     return Value.GeoVal.ToStringUtf8();
-                case ValOneofCase.DateVal:
+                case Value.ValOneofCase.DateVal:
                     return Value.DateVal.ToStringUtf8();
-                case ValOneofCase.DatetimeVal:
+                case Value.ValOneofCase.DatetimeVal:
                     return Value.DatetimeVal.ToStringUtf8();
-                case ValOneofCase.PasswordVal:
+                case Value.ValOneofCase.PasswordVal:
                     return Value.PasswordVal;
-                case ValOneofCase.UidVal:
+                case Value.ValOneofCase.UidVal:
                     return Value.UidVal.ToString();
             }
             return "";

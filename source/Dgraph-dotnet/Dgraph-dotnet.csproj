@@ -17,10 +17,17 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Grpc.Core" Version="1.7.1"/>
-    <PackageReference Include="Google.Protobuf" Version="3.4.1"/>
+    <PackageReference Include="Google.Protobuf" Version="3.7.0" />
+    <PackageReference Include="Grpc" Version="1.19.0" />
+    <PackageReference Include="Grpc.Tools" Version="1.19.0" PrivateAssets="All" />
     <PackageReference Include="System.ValueTuple" Version="4.4.0"/>
     <PackageReference Include="FluentResults" Version="1.0.0"/>
+  </ItemGroup>
+
+  <ItemGroup>
+    <Protobuf Include="github.com/dgraph-io/dgraph/protos/pb.proto" />
+    <Protobuf Include="github.com/dgraph-io/dgo/protos/api.proto" />
+    <Protobuf Include="github.com/dgraph-io/badger/pb/badger.proto" />
   </ItemGroup>
 
 </Project>
