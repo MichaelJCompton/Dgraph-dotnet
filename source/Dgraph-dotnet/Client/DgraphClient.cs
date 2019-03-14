@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
 using Api;
-using DgraphDotNet.DgraphSchema;
+using DgraphDotNet.Schema;
 using DgraphDotNet.Graph;
 using DgraphDotNet.Transactions;
 using FluentResults;
@@ -94,11 +94,11 @@ namespace DgraphDotNet {
             return Results.Ok<string>(versionResult.Tag);
         }
 
-        public FluentResults.Result<IReadOnlyList<DrgaphPredicate>> SchemaQuery() {
+        public FluentResults.Result<DgraphSchema> SchemaQuery() {
             return SchemaQuery("schema { }");
         }
 
-        public FluentResults.Result<IReadOnlyList<DrgaphPredicate>> SchemaQuery(string schemaQuery) {
+        public FluentResults.Result<DgraphSchema> SchemaQuery(string schemaQuery) {
             using(var transaction = NewTransaction()) {
                 return transaction.SchemaQuery(schemaQuery);
             }

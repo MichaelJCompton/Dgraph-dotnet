@@ -1,5 +1,5 @@
 using System.Collections.Generic;
-using DgraphDotNet.DgraphSchema;
+using DgraphDotNet.Schema;
 
 namespace DgraphDotNet
 {
@@ -8,12 +8,12 @@ namespace DgraphDotNet
         /// <summary>
         /// Returns all predicates in the Dgraph schema.
         /// </summary>
-        FluentResults.Result<IReadOnlyList<DrgaphPredicate>> SchemaQuery();
+        FluentResults.Result<DgraphSchema> SchemaQuery();
 
         /// <summary>
         /// Returns predicates in the Dgraph schema returned by the given schema query.
         /// </summary>
-        FluentResults.Result<IReadOnlyList<DrgaphPredicate>> SchemaQuery(string schemaQuery);
+        FluentResults.Result<DgraphSchema> SchemaQuery(string schemaQuery);
 
         /// <summary>
         /// Run a query in it's own transaction.

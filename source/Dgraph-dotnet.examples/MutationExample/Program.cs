@@ -25,7 +25,18 @@ namespace MutationExamples {
                     "Username: string @index(hash) .\n"
                     + "Password: password .");
 
-                while(true) {
+                var schemaResult = client.SchemaQuery();
+                if(schemaResult.IsFailed) {
+                    Console.WriteLine($"Something went wrong getting schema.");
+                    return;
+                }
+
+                Console.WriteLine("Queried schema and got :");
+                foreach (var predicate in schemaResult.Value.Schema) {
+                    Console.WriteLine(predicate.ToString());
+                }
+
+                while (true) {
                     Console.WriteLine("Hi, please enter your new username");
                     var username = Console.ReadLine();
 
@@ -33,14 +44,14 @@ namespace MutationExamples {
                     // not already in the graph as an atomic operation.
                     var result = client.Upsert("Username", GraphValue.BuildStringValue(username));
 
-                    if(result.IsFailed) { 
+                    if (result.IsFailed) {
                         Console.WriteLine("Something went wrong : " + result);
-                        continue; 
+                        continue;
                     }
 
-                    var (node, existed) = result.Value;
+                    var(node, existed) = result.Value;
 
-                    if(existed) {
+                    if (existed) {
                         Console.WriteLine("This user already existed.  Try another username.");
                         continue;
                     }
@@ -51,12 +62,12 @@ namespace MutationExamples {
                     using(var txn = client.NewTransactionWithMutations()) {
                         var mutation = txn.NewMutation();
                         var property = Clients.BuildProperty(node, "Password", GraphValue.BuildPasswordValue(password));
-                        if(property.IsFailed) {
+                        if (property.IsFailed) {
                             // ... something went wrong
                         } else {
                             mutation.AddProperty(property.Value);
                             var err = mutation.Submit();
-                            if(err.IsFailed) {
+                            if (err.IsFailed) {
                                 // ... something went wrong
                             }
                         }

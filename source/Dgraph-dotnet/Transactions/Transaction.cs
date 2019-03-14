@@ -3,9 +3,10 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using Api;
-using DgraphDotNet.DgraphSchema;
+using DgraphDotNet.Schema;
 using FluentResults;
 using Grpc.Core;
+using Newtonsoft.Json;
 
 /*
 I'd like to write
@@ -99,18 +100,25 @@ namespace DgraphDotNet.Transactions {
             }
         }
 
-        public FluentResults.Result<IReadOnlyList<DrgaphPredicate>> SchemaQuery() {
+        public FluentResults.Result<DgraphSchema> SchemaQuery() {
             return SchemaQuery("schema { }");
         }
 
-        public FluentResults.Result<IReadOnlyList<DrgaphPredicate>> SchemaQuery(string schemaQuery) {
+        public FluentResults.Result<DgraphSchema> SchemaQuery(string schemaQuery) {
             var result = Query(schemaQuery);
             if (result.IsFailed) {
-                return result.ConvertToResultWithValueType<IReadOnlyList<DrgaphPredicate>>();
+                return result.ConvertToResultWithValueType<DgraphSchema>();
             }
-            return Results.Ok<IReadOnlyList<DrgaphPredicate>>(
-                lastQueryResponse.Schema.Select(sn =>
-                    new DrgaphPredicate(sn.Predicate, sn.Type, sn.Tokenizer, sn.Reverse, sn.Count, sn.List, sn.Upsert, sn.Lang)).ToList());
+
+            // Should never fail a valid schema query (tests should ensure all
+            // cases are handled), but there's no protetection to ensure that
+            // the schemaQuery was actually a schema query, so we should wrap
+            // for parsing errors.
+            try {
+                return Results.Ok<DgraphSchema>(JsonConvert.DeserializeObject<DgraphSchema>(result.Value));
+            } catch(Exception ex) {
+                return Results.Fail<DgraphSchema>(new FluentResults.ExceptionalError(ex));
+            }
         }
 
         public FluentResults.Result<IDictionary<string, string>> Mutate(string json) {

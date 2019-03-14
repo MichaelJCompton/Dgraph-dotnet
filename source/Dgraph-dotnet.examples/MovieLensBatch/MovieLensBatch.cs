@@ -64,7 +64,7 @@ namespace BatchExample {
                         System.Environment.Exit(1);
                     }
                     Console.WriteLine("schema is : ");
-                    foreach(var predicate in result.Value) {
+                    foreach(var predicate in result.Value.Schema) {
                         Console.WriteLine(predicate);
                     }
 

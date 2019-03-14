@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using DgraphDotNet.DgraphSchema;
 using DgraphDotNet.Graph;
 using DgraphDotNet.Transactions;
 using Grpc.Core;
