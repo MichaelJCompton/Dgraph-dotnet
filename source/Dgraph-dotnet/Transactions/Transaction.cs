@@ -8,89 +8,50 @@ using FluentResults;
 using Grpc.Core;
 using Newtonsoft.Json;
 
-/*
-I'd like to write
-        
-using(txn = client.NewTransaction()) {
-    txn.mutate
-    txn.query
-    txn.mutate
-    txn.commit
-} 
-
-or
-
-txn = client.NewTransaction()
-txn.mutate()
-if(...) {
-    txn.commit();
-} else {
-    txn.discard();
-}
-
-or
-
-client.Query(....) without a transaction  ??
-*/
-
 namespace DgraphDotNet.Transactions {
 
     internal class Transaction : ITransaction {
 
-        private readonly IDgraphClientInternal client;
+        private readonly IDgraphClientInternal Client;
 
-        private enum TransactionState { OK, Committed, Aborted, Error }
+        public TransactionState TransactionState { get; private set; }
 
-        TransactionState transactionState = TransactionState.OK;
-
-        TxnContext context;
-        bool hasMutated;
-
-        Response lastQueryResponse;
+        private readonly TxnContext Context;
+        private bool HasMutated;
 
         internal Transaction(IDgraphClientInternal client) {
-            this.client = client;
+            this.Client = client;
 
-            context = new TxnContext();
-            context.LinRead = client.GetLinRead();
+            TransactionState = TransactionState.OK;
+
+            Context = new TxnContext();
+            Context.LinRead = client.GetLinRead();
         }
 
-        public bool Committed => transactionState == TransactionState.Committed;
-        public bool Aborted => transactionState == TransactionState.Aborted;
-        public bool HasError => transactionState == TransactionState.Error;
-        public bool IsOK => transactionState == TransactionState.OK;
-
-        // FIXME: 
-        // public blaa SchemaQuery(string queryString) {
-        //     ???
-        // }
-
         public FluentResults.Result<string> Query(string queryString) {
-            AssertNotDisposed();
-
             return QueryWithVars(queryString, new Dictionary<string, string>());
         }
 
         public FluentResults.Result<string> QueryWithVars(string queryString, Dictionary<string, string> varMap) {
             AssertNotDisposed();
 
-            if (transactionState != TransactionState.OK) {
-                return Results.Fail<string>(new TransactionFinished(transactionState.ToString()));
+            if (TransactionState != TransactionState.OK) {
+                return Results.Fail<string>(new TransactionFinished(TransactionState.ToString()));
             }
 
             try {
                 Api.Request request = new Api.Request();
                 request.Query = queryString;
                 request.Vars.Add(varMap);
-                request.StartTs = context.StartTs;
-                request.LinRead = context.LinRead;
+                request.StartTs = Context.StartTs;
+                request.LinRead = Context.LinRead;
 
-                lastQueryResponse = client.Query(request);
+                var queryResponse = Client.Query(request);
 
-                var err = MergeContext(lastQueryResponse.Txn);
+                var err = MergeContext(queryResponse.Txn);
 
                 if (err.IsSuccess) {
-                    return Results.Ok<string>(lastQueryResponse.Json.ToStringUtf8());
+                    return Results.Ok<string>(queryResponse.Json.ToStringUtf8());
                 } else {
                     return err.ConvertToResultWithValueType<string>();
                 }
@@ -105,6 +66,8 @@ namespace DgraphDotNet.Transactions {
         }
 
         public FluentResults.Result<DgraphSchema> SchemaQuery(string schemaQuery) {
+            AssertNotDisposed();
+
             var result = Query(schemaQuery);
             if (result.IsFailed) {
                 return result.ConvertToResultWithValueType<DgraphSchema>();
@@ -116,7 +79,7 @@ namespace DgraphDotNet.Transactions {
             // for parsing errors.
             try {
                 return Results.Ok<DgraphSchema>(JsonConvert.DeserializeObject<DgraphSchema>(result.Value));
-            } catch(Exception ex) {
+            } catch (Exception ex) {
                 return Results.Fail<DgraphSchema>(new FluentResults.ExceptionalError(ex));
             }
         }
@@ -140,8 +103,8 @@ namespace DgraphDotNet.Transactions {
         internal FluentResults.Result<IDictionary<string, string>> Mutate(Api.Mutation mutation) {
             AssertNotDisposed();
 
-            if (transactionState != TransactionState.OK) {
-                return Results.Fail<IDictionary<string, string>>(new TransactionFinished(transactionState.ToString()));
+            if (TransactionState != TransactionState.OK) {
+                return Results.Fail<IDictionary<string, string>>(new TransactionFinished(TransactionState.ToString()));
             }
 
             if (mutation.Del.Count == 0
@@ -151,14 +114,14 @@ namespace DgraphDotNet.Transactions {
                 return Results.Ok<IDictionary<string, string>>(new Dictionary<string, string>());
             }
 
-            hasMutated = true;
+            HasMutated = true;
 
             try {
-                mutation.StartTs = context.StartTs;
-                var assigned = client.Mutate(mutation);
+                mutation.StartTs = Context.StartTs;
+                var assigned = Client.Mutate(mutation);
 
                 if (mutation.CommitNow) {
-                    transactionState = TransactionState.Committed;
+                    TransactionState = TransactionState.Committed;
                 }
 
                 var err = MergeContext(assigned.Context);
@@ -178,44 +141,49 @@ namespace DgraphDotNet.Transactions {
                 // cannot use the txn further.
                 Discard(); // Ignore error - user should see the original error.
 
-                transactionState = TransactionState.Error; // overwrite the aborted value
+                TransactionState = TransactionState.Error; // overwrite the aborted value
                 return Results.Fail<IDictionary<string, string>>(new FluentResults.ExceptionalError(rpcEx));
             }
         }
 
+        // Must be ok to call multiple times!
         public void Discard() {
-            if (transactionState != TransactionState.OK) {
+            if (TransactionState == TransactionState.Committed) {
                 return;
             }
 
-            transactionState = TransactionState.Aborted;
+            if (TransactionState != TransactionState.Aborted) {
+                TransactionState = TransactionState.Aborted;
 
-            if (!hasMutated) {
-                return;
+                if (!HasMutated) {
+                    return;
+                }
+
+                Context.Aborted = true;
+
+                try {
+                    Client.Discard(Context);
+                } catch (RpcException) {
+                    // Eat it ... nothing else to do?
+                }
             }
-
-            context.Aborted = true;
-
-            try {
-                client.Discard(context);
-            } catch (RpcException) { }
         }
 
         public FluentResults.Result Commit() {
             AssertNotDisposed();
 
-            if (transactionState != TransactionState.OK) {
-                return Results.Fail(new TransactionFinished(transactionState.ToString()));
+            if (TransactionState != TransactionState.OK) {
+                return Results.Fail(new TransactionFinished(TransactionState.ToString()));
             }
 
-            transactionState = TransactionState.Committed;
+            TransactionState = TransactionState.Committed;
 
-            if (!hasMutated) {
+            if (!HasMutated) {
                 return Results.Ok();
             }
 
             try {
-                client.Commit(context);
+                Client.Commit(Context);
                 return Results.Ok();
             } catch (RpcException rpcEx) {
                 return Results.Fail(new FluentResults.ExceptionalError(rpcEx));
@@ -225,22 +193,22 @@ namespace DgraphDotNet.Transactions {
         #region dgraphtransaction
 
         private FluentResults.Result MergeContext(TxnContext srcContext) {
-            if (context == null) {
+            if (Context == null) {
                 return Results.Ok();
             }
 
-            MergeLinReads(context.LinRead, srcContext.LinRead);
-            client.MergeLinRead(srcContext.LinRead);
+            MergeLinReads(Context.LinRead, srcContext.LinRead);
+            Client.MergeLinRead(srcContext.LinRead);
 
-            if (context.StartTs == 0) {
-                context.StartTs = srcContext.StartTs;
+            if (Context.StartTs == 0) {
+                Context.StartTs = srcContext.StartTs;
             }
 
-            if (context.StartTs != srcContext.StartTs) {
+            if (Context.StartTs != srcContext.StartTs) {
                 return Results.Fail(new StartTsMismatch());
             }
 
-            context.Keys.Add(srcContext.Keys);
+            Context.Keys.Add(srcContext.Keys);
 
             return Results.Ok();
         }
@@ -268,20 +236,23 @@ namespace DgraphDotNet.Transactions {
         //
         #region disposable pattern
 
-        private bool disposed => Aborted;
+        private bool Disposed;
 
-        /// <summary>
-        /// Asserts that instance is not disposed.
-        /// </summary>
-        /// <exception cref="System.ObjectDisposedException">Thrown if the client has been disposed.</exception>
         protected void AssertNotDisposed() {
-            if (disposed) {
+            if (Disposed) {
                 throw new ObjectDisposedException(GetType().Name);
             }
         }
 
         public void Dispose() {
+            Disposed = true;
+            
             Discard(); // like all dispose interface calls, it's safe to call Discard() many times
+            //
+            // might need to allow some time here cause there's a deadline on
+            // object clean up.  So I might need to set a deadline that gets
+            // passed to the backend call so we don't wait on the Dgraph call to
+            // succeed?
         }
 
         #endregion
