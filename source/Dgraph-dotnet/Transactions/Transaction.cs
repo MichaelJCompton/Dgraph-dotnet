@@ -164,7 +164,7 @@ namespace DgraphDotNet.Transactions {
                 try {
                     Client.Discard(Context);
                 } catch (RpcException) {
-                    // Eat it ... nothing else to do?
+                    // Eat it ... nothing else to do? Dgraph will clean up eventually?
                 }
             }
         }
@@ -246,7 +246,7 @@ namespace DgraphDotNet.Transactions {
 
         public void Dispose() {
             Disposed = true;
-            
+
             Discard(); // like all dispose interface calls, it's safe to call Discard() many times
             //
             // might need to allow some time here cause there's a deadline on

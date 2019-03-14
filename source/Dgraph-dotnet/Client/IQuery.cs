@@ -16,12 +16,12 @@ namespace DgraphDotNet
         FluentResults.Result<DgraphSchema> SchemaQuery(string schemaQuery);
 
         /// <summary>
-        /// Run a query in it's own transaction.
+        /// Run a query.
         /// </summary>
         FluentResults.Result<string> Query(string queryString);
 
         /// <summary>
-        /// Run a query in it's own transaction.
+        /// Run a query with variables.
         /// </summary>
         FluentResults.Result<string> QueryWithVars(string queryString, Dictionary<string, string> varMap);
     }
