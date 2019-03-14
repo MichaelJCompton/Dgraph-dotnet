@@ -12,7 +12,7 @@ using Grpc.Core;
 
 namespace DgraphDotNet {
 
-    internal class DgraphClient : IDgraphClient {
+    internal class DgraphClient : IDgraphClient, IDgraphClientInternal {
 
         protected readonly IGRPCConnectionFactory connectionFactory;
         protected readonly ITransactionFactory transactionFactory;
@@ -182,31 +182,31 @@ namespace DgraphDotNet {
             return result;
         }
 
-        internal Response Query(Api.Request req) {
+        public Response Query(Api.Request req) {
             AssertNotDisposed();
 
             return connections.Values.ElementAt(rnd.Next(connections.Count)).Query(req);
         }
 
-        internal Assigned Mutate(Api.Mutation mut) {
+        public Assigned Mutate(Api.Mutation mut) {
             AssertNotDisposed();
 
             return connections.Values.ElementAt(rnd.Next(connections.Count)).Mutate(mut);
         }
 
-        internal void Commit(TxnContext context) {
+        public void Commit(TxnContext context) {
             AssertNotDisposed();
 
             connections.Values.ElementAt(rnd.Next(connections.Count)).Commit(context);
         }
 
-        internal void Discard(TxnContext context) {
+        public void Discard(TxnContext context) {
             AssertNotDisposed();
 
             connections.Values.ElementAt(rnd.Next(connections.Count)).Discard(context);
         }
 
-        internal LinRead GetLinRead() {
+        public LinRead GetLinRead() {
             LinRead lr;
 
             lock(LinReadMutex) {
@@ -215,7 +215,7 @@ namespace DgraphDotNet {
             return lr;
         }
 
-        internal void MergeLinRead(LinRead newLinRead) {
+        public void MergeLinRead(LinRead newLinRead) {
             lock(LinReadMutex) {
                 Transaction.MergeLinReads(linRead, newLinRead);
             }

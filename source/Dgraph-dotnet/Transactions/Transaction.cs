@@ -37,7 +37,7 @@ namespace DgraphDotNet.Transactions {
 
     internal class Transaction : ITransaction {
 
-        private readonly DgraphClient client;
+        private readonly IDgraphClientInternal client;
 
         private enum TransactionState { OK, Committed, Aborted, Error }
 
@@ -48,7 +48,7 @@ namespace DgraphDotNet.Transactions {
 
         Response lastQueryResponse;
 
-        internal Transaction(DgraphClient client) {
+        internal Transaction(IDgraphClientInternal client) {
             this.client = client;
 
             context = new TxnContext();
