@@ -77,13 +77,33 @@ namespace DgraphDotNet {
         private System.Object LinReadMutex => linReadMutex;
         private Random rnd = new Random();
 
-        public void AlterSchema(string newSchema) {
+        public FluentResults.Result AlterSchema(string newSchema) {
             AssertNotDisposed();
 
             var op = new Api.Operation();
             op.Schema = newSchema;
 
+            try {
             connections.Values.ElementAt(rnd.Next(connections.Count)).Alter(op);
+                return Results.Ok();
+            } catch (RpcException rpcEx) {
+                return Results.Fail(new FluentResults.ExceptionalError(rpcEx));
+            }
+        }
+
+        public async Task<FluentResults.Result> DropAll() {
+            AssertNotDisposed();
+
+            var op = new Api.Operation() {
+                DropAll = true
+            };
+
+            try {
+                await connections.Values.ElementAt(rnd.Next(connections.Count)).Alter(op);
+                return Results.Ok();
+            } catch (RpcException rpcEx) {
+                return Results.Fail(new FluentResults.ExceptionalError(rpcEx));
+            }
         }
 
         public FluentResults.Result<string> CheckVersion() {

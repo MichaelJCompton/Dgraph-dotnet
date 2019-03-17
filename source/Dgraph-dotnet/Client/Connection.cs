@@ -1,5 +1,6 @@
 using System;
 using System.Diagnostics;
+using System.Threading.Tasks;
 using Api;
 using Grpc.Core;
 
@@ -7,7 +8,7 @@ namespace DgraphDotNet {
 
 	internal interface IGRPCConnection : IDisposable {
 		Status LastKnownStatus { get; set; }
-		void Alter(Api.Operation op);
+		Task Alter(Api.Operation op);
         Api.Version CheckVersion();
 		Response Query(Api.Request req);
 		Assigned Mutate(Api.Mutation mut);
@@ -52,10 +53,10 @@ namespace DgraphDotNet {
 
 		#region mutations
 
-		public void Alter(Api.Operation op) {
+		public async Task Alter(Api.Operation op) {
 			AssertNotDisposed();
 
-			connection.Alter(op);
+			await connection.AlterAsync(op);
 		}
 
 		public Api.Version CheckVersion() {
