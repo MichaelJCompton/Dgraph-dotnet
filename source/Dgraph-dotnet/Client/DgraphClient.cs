@@ -109,9 +109,12 @@ namespace DgraphDotNet {
         public FluentResults.Result<string> CheckVersion() {
             AssertNotDisposed();
 
+            try {
             var versionResult = connections.Values.ElementAt(rnd.Next(connections.Count)).CheckVersion();
-
             return Results.Ok<string>(versionResult.Tag);
+            } catch (RpcException rpcEx) {
+                return Results.Fail<string>(new FluentResults.ExceptionalError(rpcEx));
+            }
         }
 
         public FluentResults.Result<DgraphSchema> SchemaQuery() {
