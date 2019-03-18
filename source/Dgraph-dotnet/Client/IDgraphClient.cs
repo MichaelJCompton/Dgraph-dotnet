@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 using DgraphDotNet.Graph;
 using DgraphDotNet.Transactions;
 using Grpc.Core;
@@ -49,7 +50,12 @@ namespace DgraphDotNet {
         /// <summary>
         /// Alter the schema see: https://docs.dgraph.io/query-language/#schema
         /// </summary>
-        void AlterSchema(string newSchema);
+        FluentResults.Result AlterSchema(string newSchema);
+
+        /// <summary>
+        /// Remove everything from the database.
+        /// </summary>
+        Task<FluentResults.Result> DropAll();
 
         /// <summary>
         /// Returns the Dgraph version string.
