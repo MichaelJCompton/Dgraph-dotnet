@@ -9,6 +9,7 @@ using DgraphDotNet.Graph;
 using DgraphDotNet.Transactions;
 using FluentResults;
 using Grpc.Core;
+using System.Threading.Tasks;
 
 namespace DgraphDotNet {
 
@@ -84,7 +85,7 @@ namespace DgraphDotNet {
             op.Schema = newSchema;
 
             try {
-            connections.Values.ElementAt(rnd.Next(connections.Count)).Alter(op);
+                connections.Values.ElementAt(rnd.Next(connections.Count)).Alter(op);
                 return Results.Ok();
             } catch (RpcException rpcEx) {
                 return Results.Fail(new FluentResults.ExceptionalError(rpcEx));
@@ -110,8 +111,8 @@ namespace DgraphDotNet {
             AssertNotDisposed();
 
             try {
-            var versionResult = connections.Values.ElementAt(rnd.Next(connections.Count)).CheckVersion();
-            return Results.Ok<string>(versionResult.Tag);
+                var versionResult = connections.Values.ElementAt(rnd.Next(connections.Count)).CheckVersion();
+                return Results.Ok<string>(versionResult.Tag);
             } catch (RpcException rpcEx) {
                 return Results.Fail<string>(new FluentResults.ExceptionalError(rpcEx));
             }
