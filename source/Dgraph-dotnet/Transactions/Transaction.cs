@@ -68,15 +68,15 @@ namespace DgraphDotNet.Transactions {
         public FluentResults.Result<DgraphSchema> SchemaQuery(string schemaQuery) {
             AssertNotDisposed();
 
+            if(!schemaQuery.StartsWith("schema")) {
+                return Results.Fail<DgraphSchema>("Not a schema query.");
+            }
+
             var result = Query(schemaQuery);
             if (result.IsFailed) {
                 return result.ConvertToResultWithValueType<DgraphSchema>();
             }
 
-            // Should never fail a valid schema query (tests should ensure all
-            // cases are handled), but there's no protetection to ensure that
-            // the schemaQuery was actually a schema query, so we should wrap
-            // for parsing errors.
             try {
                 return Results.Ok<DgraphSchema>(JsonConvert.DeserializeObject<DgraphSchema>(result.Value));
             } catch (Exception ex) {

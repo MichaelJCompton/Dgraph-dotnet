@@ -122,15 +122,11 @@ schema(pred: [name, friend]) {
         [Test]
         public void SchemaQuery_FailsIfNotASchemaQuery() {
             (var client, var response) = MinimalClientForQuery();
-            response.Json = ByteString.CopyFrom(Encoding.UTF8.GetBytes("{ \"aquery\" : [ \"apred\" : 10 ] }"));
             var txn = new Transaction(client);
 
-            // The way I'd detect that;s it's not a schema query is cause I can't parse the answer.
-            var result = txn.SchemaQuery("something else");
+            var result = txn.SchemaQuery("q(func: uid(0x1)) { blaa }");
 
             result.IsFailed.Should().Be(true);
-            result.Errors.First().Should().BeOfType<ExceptionalError>();
-            (result.Errors.First() as ExceptionalError).Exception.Should().BeOfType<JsonReaderException>();
         }
 
         #endregion
