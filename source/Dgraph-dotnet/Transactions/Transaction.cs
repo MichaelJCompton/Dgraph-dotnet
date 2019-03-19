@@ -186,6 +186,12 @@ namespace DgraphDotNet.Transactions {
                 Client.Commit(Context);
                 return Results.Ok();
             } catch (RpcException rpcEx) {
+                // I'm not 100% sure here - so what happens if the transaction
+                // throws an exception?  It'll be in state committed, but it
+                // isn't in Dgraph.  It can't be retried because of the state.
+                // The handling here is the same as in Dgo, so I assume you have
+                // to retry all the operations again and then try to commit
+                // again.
                 return Results.Fail(new FluentResults.ExceptionalError(rpcEx));
             }
         }
