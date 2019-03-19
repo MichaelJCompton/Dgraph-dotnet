@@ -68,7 +68,7 @@ namespace DgraphDotNet.Transactions {
         public FluentResults.Result<DgraphSchema> SchemaQuery(string schemaQuery) {
             AssertNotDisposed();
 
-            if(!schemaQuery.StartsWith("schema")) {
+            if(!schemaQuery.Trim().StartsWith("schema")) {
                 return Results.Fail<DgraphSchema>("Not a schema query.");
             }
 

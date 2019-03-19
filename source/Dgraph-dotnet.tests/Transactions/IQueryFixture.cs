@@ -57,7 +57,7 @@ namespace Dgraph_dotnet.tests.Transactions {
 
             response.Json = ByteString.CopyFrom(Encoding.UTF8.GetBytes(queryResult));
 
-            var result = txn.SchemaQuery("some valid query");
+            var result = txn.SchemaQuery("schema { }");
 
             result.IsSuccess.Should().Be(true);
 
@@ -99,7 +99,7 @@ schema(pred: [name, friend]) {
             client.Query(Arg.Any<Request>()).Throws(new RpcException(new Status(), "Something failed"));
             var txn = new Transaction(client);
 
-            var result = txn.SchemaQuery("throw");
+            var result = txn.SchemaQuery();
 
             result.IsFailed.Should().Be(true);
             result.Errors.First().Should().BeOfType<ExceptionalError>();
