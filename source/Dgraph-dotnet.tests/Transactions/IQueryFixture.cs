@@ -14,7 +14,7 @@ using NSubstitute.ExceptionExtensions;
 using NUnit.Framework;
 
 namespace Dgraph_dotnet.tests.Transactions {
-    public class SchemaQueryFixture {
+    public class SchemaQueryFixture : TransactionFixtureBase {
 
         // 
         // ------------------------------------------------------
@@ -23,18 +23,6 @@ namespace Dgraph_dotnet.tests.Transactions {
         //
 
         #region SchemaQuery
-
-        private(IDgraphClientInternal, Response) MinimalClientForQuery() {
-            var client = Substitute.For<IDgraphClientInternal>();
-            var linRead = new LinRead();
-            client.GetLinRead().Returns(linRead);
-
-            var response = new Response();
-            response.Txn = new TxnContext();;
-            client.Query(Arg.Any<Request>()).Returns(response);
-
-            return (client, response);
-        }
 
         [Test]
         public void SchemaQuery_ReturnsSchema() {
