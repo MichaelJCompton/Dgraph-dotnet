@@ -7,6 +7,5 @@ steps:
 - name: microsoft/dotnet:2.2-sdk
   args: ['bash', '-c', 'dotnet build -p:Version=$(cat GITVERSION)']
 - name: microsoft/dotnet:2.2-sdk
-  entrypoint: sh
   args: ['bash', '-c', 'dotnet test -p:Version=$(cat GITVERSION) --no-build']
 # Run the E2E tests here on GraphSchema.io
