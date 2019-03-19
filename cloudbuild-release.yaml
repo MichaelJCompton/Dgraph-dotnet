@@ -1,0 +1,24 @@
+steps:
+- name: gcr.io/cloud-builders/git
+  args: ['fetch', '--unshallow']
+- name: gcr.io/graphschema/dotnet_gitversion
+  args: ['bash', '-c', 'dotnet-gitversion /showvariable FullSemVer | sed "s/+/-/g" > GITVERSION']
+- name: microsoft/dotnet:2.2-sdk
+  args: ['bash', '-c', 'dotnet build -c Release -p:Version=$(cat GITVERSION)']
+- name: microsoft/dotnet:2.2-sdk
+  args: ['bash', '-c', 'dotnet test -c Release -p:Version=$(cat GITVERSION) --no-build --no-restore']
+
+# Run the E2E tests here on GraphSchema.io
+
+- name: microsoft/dotnet:2.2-sdk
+  args: ['bash', '-c', 'dotnet pack source/Dgraph-dotnet/Dgraph-dotnet.csproj -c Release -p:Version=$(cat GITVERSION) --no-restore --no-build --output ../../artifacts']
+- name: microsoft/dotnet:2.2-sdk
+  args: ['bash', '-c', 'dotnet nuget push artifacts/Dgraph-dotnet.$(cat GITVERSION).nupkg -k $$NUGET_KEY -s https://api.nuget.org/v3/index.json']
+timeout: 240s
+
+secrets:
+- kmsKeyName: projects/dgraph-dotnet/locations/global/keyRings/graphschema-keys/cryptoKeys/nuget-key
+  secretEnv:
+    NUGET_KEY: CiQApAQ/k3VULPs5hj2kRL6gXQyb94OIHDV2hHOmRlaf2cWS4VwSWAC+fJfRoNsPlocnmRiyzppho5iqovEVUlVZi3ZZ0mlItxHUJpXpOtWKuTAgFENzLapF3PZtEKAqj0Je6ex49NNYrOWHcP0fD/Yc+loULySEQukLHZ0ujDY=
+
+# Add the encrypted GraphSchema.io keys here once we are doing the E2E in cloudbuild
