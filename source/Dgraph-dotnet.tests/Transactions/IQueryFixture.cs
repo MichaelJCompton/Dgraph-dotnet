@@ -14,11 +14,11 @@ using NSubstitute.ExceptionExtensions;
 using NUnit.Framework;
 
 namespace Dgraph_dotnet.tests.Transactions {
-    public class SchemaQueryFixture : TransactionFixtureBase {
+    public class IQueryFixture : TransactionFixtureBase {
 
         // 
         // ------------------------------------------------------
-        //                   IQuery
+        //                   SchemaQuery
         // ------------------------------------------------------
         //
 
@@ -119,6 +119,12 @@ schema(pred: [name, friend]) {
 
         #endregion
 
+        // 
+        // ------------------------------------------------------
+        //                      Query
+        // ------------------------------------------------------
+        //
+
         #region Query
 
         [Test]
@@ -153,6 +159,22 @@ schema(pred: [name, friend]) {
         }
 
         [Test]
+        public void Query_PassesBackResult() {
+            (var client, var response) = MinimalClientForQuery();
+            var json = "{ some-json }";
+            response.Json = ByteString.CopyFrom(Encoding.UTF8.GetBytes(json));
+            var txn = new Transaction(client);
+
+            var theQuery = "The really important query";
+            var theVars = new Dictionary<string, string> { { "var", "val" } };
+
+            var result = txn.QueryWithVars(theQuery, theVars);
+
+            result.IsSuccess.Should().BeTrue();
+            result.Value.Should().Be(json);
+        }
+
+        [Test]
         public void Query_FailsIfError() {
             var client = Substitute.For<IDgraphClientInternal>();
             client.Query(Arg.Any<Request>()).Throws(new RpcException(new Status(), "Something failed"));
@@ -163,6 +185,32 @@ schema(pred: [name, friend]) {
             result.IsFailed.Should().Be(true);
             result.Errors.First().Should().BeOfType<ExceptionalError>();
             (result.Errors.First() as ExceptionalError).Exception.Should().BeOfType<RpcException>();
+        }
+
+        [Test]
+        public void Query_FailDoesntChangeTransactionOKState() {
+            var client = Substitute.For<IDgraphClientInternal>();
+            client.Query(Arg.Any<Request>()).Throws(new RpcException(new Status(), "Something failed"));
+            var txn = new Transaction(client);
+
+            txn.Query("throw");
+
+            txn.TransactionState.Should().Be(TransactionState.OK);
+        }
+
+        [Test]
+        public void Query_SuccessDoesntChangeTransactionOKState() {
+            (var client, var response) = MinimalClientForQuery();
+            var json = "{ some-json }";
+            response.Json = ByteString.CopyFrom(Encoding.UTF8.GetBytes(json));
+            var txn = new Transaction(client);
+
+            var theQuery = "The really important query";
+            var theVars = new Dictionary<string, string> { { "var", "val" } };
+
+            txn.QueryWithVars(theQuery, theVars);
+
+            txn.TransactionState.Should().Be(TransactionState.OK);
         }
 
         #endregion
