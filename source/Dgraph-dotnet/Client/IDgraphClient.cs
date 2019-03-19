@@ -50,7 +50,7 @@ namespace DgraphDotNet {
         /// <summary>
         /// Alter the schema see: https://docs.dgraph.io/query-language/#schema
         /// </summary>
-        FluentResults.Result AlterSchema(string newSchema);
+        Task<FluentResults.Result> AlterSchema(string newSchema);
 
         /// <summary>
         /// Remove everything from the database.
