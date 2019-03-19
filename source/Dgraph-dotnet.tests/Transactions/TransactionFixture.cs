@@ -1,15 +1,11 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using Api;
 using DgraphDotNet;
 using DgraphDotNet.Transactions;
 using FluentAssertions;
 using FluentResults;
-using Google.Protobuf;
 using Grpc.Core;
-using Newtonsoft.Json;
 using NSubstitute;
 using NSubstitute.ExceptionExtensions;
 using NUnit.Framework;
@@ -23,25 +19,13 @@ namespace Dgraph_dotnet.tests.Transactions {
         // ------------------------------------------------------
         //
 
-        #region Mutate
+        // See the other test files.
 
-        #endregion
-
-        #region Delete
-
-        #endregion
-
-        #region Discard
-
-        #endregion
-
-        #region Commit
-
-        #endregion
+        // Anything else generic to go in here ?
 
         // 
         // ------------------------------------------------------
-        //                   Other
+        //                   All - Errors
         // ------------------------------------------------------
         //
 

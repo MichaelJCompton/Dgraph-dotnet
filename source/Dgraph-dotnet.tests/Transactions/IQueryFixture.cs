@@ -8,7 +8,6 @@ using FluentAssertions;
 using FluentResults;
 using Google.Protobuf;
 using Grpc.Core;
-using Newtonsoft.Json;
 using NSubstitute;
 using NSubstitute.ExceptionExtensions;
 using NUnit.Framework;
