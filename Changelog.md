@@ -10,15 +10,16 @@ Dgraph-dotnet versioning adheres to [Semantic Versioning](http://semver.org/spec
 
 ### Added
 
+- Added a DropAll.
 - Finally added a changelog :-)
 
 ### Changed
 
-Changed for changes in existing functionality.
-
 *Breaking Changes*
 
-- Everything goes Async
+- Everything goes Async.
+- SchemaQuery updated (Dgraph deprecated old response).  Now returns a schema object model. 
+- Catch more exceptions and returns as errors (e.g. CheckVersion).
 
 ### Fixed
 
