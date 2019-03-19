@@ -68,15 +68,15 @@ namespace DgraphDotNet.Transactions {
         public FluentResults.Result<DgraphSchema> SchemaQuery(string schemaQuery) {
             AssertNotDisposed();
 
+            if(!schemaQuery.Trim().StartsWith("schema")) {
+                return Results.Fail<DgraphSchema>("Not a schema query.");
+            }
+
             var result = Query(schemaQuery);
             if (result.IsFailed) {
                 return result.ConvertToResultWithValueType<DgraphSchema>();
             }
 
-            // Should never fail a valid schema query (tests should ensure all
-            // cases are handled), but there's no protetection to ensure that
-            // the schemaQuery was actually a schema query, so we should wrap
-            // for parsing errors.
             try {
                 return Results.Ok<DgraphSchema>(JsonConvert.DeserializeObject<DgraphSchema>(result.Value));
             } catch (Exception ex) {
@@ -186,6 +186,12 @@ namespace DgraphDotNet.Transactions {
                 Client.Commit(Context);
                 return Results.Ok();
             } catch (RpcException rpcEx) {
+                // I'm not 100% sure here - so what happens if the transaction
+                // throws an exception?  It'll be in state committed, but it
+                // isn't in Dgraph.  It can't be retried because of the state.
+                // The handling here is the same as in Dgo, so I assume you have
+                // to retry all the operations again and then try to commit
+                // again.
                 return Results.Fail(new FluentResults.ExceptionalError(rpcEx));
             }
         }
