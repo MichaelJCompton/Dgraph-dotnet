@@ -20,12 +20,11 @@ namespace DgraphDotNet.Transactions {
         private bool HasMutated;
 
         internal Transaction(IDgraphClientInternal client) {
-            this.Client = client;
+            Client = client;
 
             TransactionState = TransactionState.OK;
 
             Context = new TxnContext();
-            Context.LinRead = client.GetLinRead();
         }
 
         public FluentResults.Result<string> Query(string queryString) {
@@ -44,7 +43,6 @@ namespace DgraphDotNet.Transactions {
                 request.Query = queryString;
                 request.Vars.Add(varMap);
                 request.StartTs = Context.StartTs;
-                request.LinRead = Context.LinRead;
 
                 var queryResponse = Client.Query(request);
 
@@ -199,12 +197,9 @@ namespace DgraphDotNet.Transactions {
         #region dgraphtransaction
 
         private FluentResults.Result MergeContext(TxnContext srcContext) {
-            if (Context == null) {
+            if (srcContext == null) {
                 return Results.Ok();
             }
-
-            MergeLinReads(Context.LinRead, srcContext.LinRead);
-            Client.MergeLinRead(srcContext.LinRead);
 
             if (Context.StartTs == 0) {
                 Context.StartTs = srcContext.StartTs;
@@ -215,22 +210,9 @@ namespace DgraphDotNet.Transactions {
             }
 
             Context.Keys.Add(srcContext.Keys);
+            Context.Preds.Add(srcContext.Preds);
 
             return Results.Ok();
-        }
-
-        internal static void MergeLinReads(LinRead dst, LinRead src) {
-            if (src == null || src.Ids == null) {
-                return;
-            }
-
-            foreach (var entry in src.Ids) {
-                if (dst.Ids.TryGetValue(entry.Key, out var did) && (did >= entry.Value)) {
-                    // do nothing
-                } else {
-                    dst.Ids[entry.Key] = entry.Value;
-                }
-            }
         }
 
         #endregion

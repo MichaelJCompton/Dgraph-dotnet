@@ -21,7 +21,6 @@ namespace DgraphDotNet {
         internal DgraphClient(IGRPCConnectionFactory connectionFactory, ITransactionFactory transactionFactory) {
             this.connectionFactory = connectionFactory;
             this.transactionFactory = transactionFactory;
-            linRead = new LinRead();
         }
 
         // 
@@ -73,9 +72,6 @@ namespace DgraphDotNet {
 
         #region transactions
 
-        private LinRead linRead;
-        private readonly System.Object linReadMutex = new System.Object();
-        private System.Object LinReadMutex => linReadMutex;
         private Random rnd = new Random();
 
         public async Task<FluentResults.Result> AlterSchema(string newSchema) {
@@ -228,21 +224,6 @@ namespace DgraphDotNet {
             AssertNotDisposed();
 
             connections.Values.ElementAt(rnd.Next(connections.Count)).Discard(context);
-        }
-
-        public LinRead GetLinRead() {
-            LinRead lr;
-
-            lock(LinReadMutex) {
-                lr = new LinRead(linRead);
-            }
-            return lr;
-        }
-
-        public void MergeLinRead(LinRead newLinRead) {
-            lock(LinReadMutex) {
-                Transaction.MergeLinReads(linRead, newLinRead);
-            }
         }
 
         #endregion

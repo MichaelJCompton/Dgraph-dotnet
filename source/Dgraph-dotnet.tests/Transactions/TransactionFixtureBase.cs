@@ -7,8 +7,6 @@ namespace Dgraph_dotnet.tests.Transactions {
 
         internal (IDgraphClientInternal, Response) MinimalClientForQuery() {
             var client = Substitute.For<IDgraphClientInternal>();
-            var linRead = new LinRead();
-            client.GetLinRead().Returns(linRead);
 
             var response = new Response();
             response.Txn = new TxnContext();;
@@ -19,8 +17,6 @@ namespace Dgraph_dotnet.tests.Transactions {
 
         internal (IDgraphClientInternal, Assigned) MinimalClientForMutation() {
             var client = Substitute.For<IDgraphClientInternal>();
-            var linRead = new LinRead();
-            client.GetLinRead().Returns(linRead);
 
             var assigned = new Assigned();
             assigned.Context = new TxnContext();;

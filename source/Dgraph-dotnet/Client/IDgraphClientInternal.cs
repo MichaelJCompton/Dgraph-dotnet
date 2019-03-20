@@ -15,9 +15,6 @@ namespace DgraphDotNet {
         void Commit(TxnContext context);
 
         void Discard(TxnContext context);
-
-        LinRead GetLinRead();
-
-        void MergeLinRead(LinRead newLinRead);
+        
     }
 }
