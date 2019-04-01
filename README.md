@@ -36,6 +36,8 @@ Grab the [Dgraph-dotnet](https://www.nuget.org/packages/Dgraph-dotnet/) NuGet pa
 
 ## Learning
 
+*The examples are being replaced by automated end-to-end testing that shows how to use the library and gets run on each build against compatible Dgraph versions.  The testing is being built out in source/Dgraph-dotnet.tests.e2e.*
+
 Checkout the examples in `source/Dgraph-dotnet.examples`.  There's a script in `source/Dgraph-dotnet.examples/scripts` to spin up a dgraph instance to run examples with.
 
 ## Using
@@ -180,7 +182,7 @@ If you need to create nodes with unique identifying edges, then you'll need to u
 
 To use the client, just include [Dgraph-dotnet](https://www.nuget.org/packages/Dgraph-dotnet/) NuGet package in you project.
 
-To build, clone the repo and run the cake build (currently only working on bash) with `./build.sh`.  The required `.cs` files built from the Dgraph protos files aren't distributed with this source. The build process will clone the appropriate version of Dgraph and build the required `.cs` sources from the Dgraph protos into `source/Dgraph-dotnet/DgraphAPI`.  You can also just run `./scripts/getDgraph.sh` from the project root directory to clone dgraph and generate from protos, without building the Dgraph-dotnet library.  
+To build from source, just run `dotnet build`, `dotnet test`, etc.
 
 ## Contributing
 
