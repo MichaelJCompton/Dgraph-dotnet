@@ -1,0 +1,8 @@
+car: uid @count .
+carMake: string @index(hash) .
+dob: dateTime @index(day) .
+height: float .
+
+
+
+

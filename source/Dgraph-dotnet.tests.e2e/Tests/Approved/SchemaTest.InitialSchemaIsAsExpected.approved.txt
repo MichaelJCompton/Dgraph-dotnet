@@ -1,0 +1,5 @@
+_predicate_: [string] .
+dgraph.group.acl: string .
+dgraph.password: password .
+dgraph.user.group: uid @reverse .
+dgraph.xid: string @index(exact) .

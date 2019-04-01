@@ -1,0 +1,9 @@
+name: string @index(term, exact) @upsert .
+friends: uid @reverse @count .
+dob: dateTime @index(year) .
+abool: bool .
+height: float .
+scores: [int] @index(int) .
+
+
+

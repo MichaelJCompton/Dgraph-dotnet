@@ -1,0 +1,4 @@
+dob: datetime .
+friends: uid .
+name: string .
+scores: int .

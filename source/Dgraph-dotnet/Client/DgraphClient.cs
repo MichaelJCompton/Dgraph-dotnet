@@ -165,14 +165,14 @@ namespace DgraphDotNet {
                     var queryResult = txn.Query(query);
 
                     if (queryResult.IsFailed) {
-                        result = addErr(result, queryResult.ConvertToResultWithValueType<(INode, bool)>());
+                        result = addErr(result, queryResult.ToResult<(INode, bool)>());
                         continue;
                     }
 
                     if (String.Equals(queryResult.Value, "{\"q\":[]}", StringComparison.Ordinal)) {
                         var assigned = txn.Mutate($"{{ \"uid\": \"_:{newNodeBlankName}\", \"{predicate}\": \"{value.ToString()}\" }}");
                         if (assigned.IsFailed) {
-                            result = addErr(result, assigned.ConvertToResultWithValueType<(INode, bool)>());
+                            result = addErr(result, assigned.ToResult<(INode, bool)>());
                             continue;
                         }
                         var err = txn.Commit();
@@ -184,7 +184,7 @@ namespace DgraphDotNet {
                             result = addErr(result, Results.Fail<(INode, bool)>("Failed to parse UID : " + UIDasString));
                             continue;
                         }
-                        result = addErr(result, err.ConvertToResultWithValueType<(INode, bool)>());
+                        result = addErr(result, err.ToResult<(INode, bool)>());
                         continue;
                     } else {
                         var UIDasString = queryResult.Value

@@ -51,7 +51,7 @@ namespace DgraphDotNet.Transactions {
                 if (err.IsSuccess) {
                     return Results.Ok<string>(queryResponse.Json.ToStringUtf8());
                 } else {
-                    return err.ConvertToResultWithValueType<string>();
+                    return err.ToResult<string>();
                 }
 
             } catch (RpcException rpcEx) {
@@ -72,7 +72,7 @@ namespace DgraphDotNet.Transactions {
 
             var result = Query(schemaQuery);
             if (result.IsFailed) {
-                return result.ConvertToResultWithValueType<DgraphSchema>();
+                return result.ToResult<DgraphSchema>();
             }
 
             try {
@@ -95,7 +95,7 @@ namespace DgraphDotNet.Transactions {
 
             var mut = new Api.Mutation();
             mut.DeleteJson = Google.Protobuf.ByteString.CopyFromUtf8(json);
-            return Mutate(mut).ConvertTo();
+            return Mutate(mut).ToResult();
         }
 
         internal FluentResults.Result<IDictionary<string, string>> Mutate(Api.Mutation mutation) {
@@ -124,7 +124,7 @@ namespace DgraphDotNet.Transactions {
 
                 var err = MergeContext(assigned.Context);
                 if (err.IsFailed) {
-                    return err.ConvertToResultWithValueType<IDictionary<string, string>>();
+                    return err.ToResult<IDictionary<string, string>>();
                 }
 
                 return Results.Ok<IDictionary<string, string>>(assigned.Uids);

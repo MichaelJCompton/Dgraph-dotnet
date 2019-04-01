@@ -1,4 +1,4 @@
-
+﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 15
 VisualStudioVersion = 15.0.26124.0
@@ -16,6 +16,8 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MovieLensBatch", "source\Dgraph-dotnet.examples\MovieLensBatch\MovieLensBatch.csproj", "{0F560862-19BC-44F5-AC79-B90D6BD16E8F}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MutationExample", "source\Dgraph-dotnet.examples\MutationExample\MutationExample.csproj", "{B70197CC-3F10-41A7-BE0F-15752FA7FBE9}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Dgraph-dotnet.tests.e2e", "source\Dgraph-dotnet.tests.e2e\Dgraph-dotnet.tests.e2e.csproj", "{4B25EEB0-5049-481D-ACA3-BB4578990A3C}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -90,6 +92,18 @@ Global
 		{B70197CC-3F10-41A7-BE0F-15752FA7FBE9}.Release|x64.Build.0 = Release|x64
 		{B70197CC-3F10-41A7-BE0F-15752FA7FBE9}.Release|x86.ActiveCfg = Release|x86
 		{B70197CC-3F10-41A7-BE0F-15752FA7FBE9}.Release|x86.Build.0 = Release|x86
+		{4B25EEB0-5049-481D-ACA3-BB4578990A3C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{4B25EEB0-5049-481D-ACA3-BB4578990A3C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{4B25EEB0-5049-481D-ACA3-BB4578990A3C}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{4B25EEB0-5049-481D-ACA3-BB4578990A3C}.Debug|x64.Build.0 = Debug|Any CPU
+		{4B25EEB0-5049-481D-ACA3-BB4578990A3C}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{4B25EEB0-5049-481D-ACA3-BB4578990A3C}.Debug|x86.Build.0 = Debug|Any CPU
+		{4B25EEB0-5049-481D-ACA3-BB4578990A3C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{4B25EEB0-5049-481D-ACA3-BB4578990A3C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{4B25EEB0-5049-481D-ACA3-BB4578990A3C}.Release|x64.ActiveCfg = Release|Any CPU
+		{4B25EEB0-5049-481D-ACA3-BB4578990A3C}.Release|x64.Build.0 = Release|Any CPU
+		{4B25EEB0-5049-481D-ACA3-BB4578990A3C}.Release|x86.ActiveCfg = Release|Any CPU
+		{4B25EEB0-5049-481D-ACA3-BB4578990A3C}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
 		{351DAE37-EB5A-4821-8BB1-14952AAD5F93} = {E9FC4AAC-E342-4F19-AF70-47E29DAFC5DD}
@@ -98,5 +112,6 @@ Global
 		{87227B75-BD78-4D19-914C-29DCFC124937} = {1455EE5E-2669-4083-AD94-5F1996DB1E1D}
 		{0F560862-19BC-44F5-AC79-B90D6BD16E8F} = {1455EE5E-2669-4083-AD94-5F1996DB1E1D}
 		{B70197CC-3F10-41A7-BE0F-15752FA7FBE9} = {1455EE5E-2669-4083-AD94-5F1996DB1E1D}
+		{4B25EEB0-5049-481D-ACA3-BB4578990A3C} = {E9FC4AAC-E342-4F19-AF70-47E29DAFC5DD}
 	EndGlobalSection
 EndGlobal

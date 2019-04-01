@@ -13,7 +13,9 @@ steps:
 - name: microsoft/dotnet:2.2-sdk
   args: ['bash', '-c', 'dotnet pack source/Dgraph-dotnet/Dgraph-dotnet.csproj -c Release -p:Version=$(cat GITVERSION) --no-restore --no-build --output ../../artifacts']
 - name: microsoft/dotnet:2.2-sdk
-  args: ['bash', '-c', 'dotnet nuget push artifacts/Dgraph-dotnet.$(cat GITVERSION).nupkg -k $$NUGET_KEY -s https://api.nuget.org/v3/index.json']
+  entrypoint: 'bash'
+  args: ['-c', 'dotnet nuget push artifacts/Dgraph-dotnet.$(cat GITVERSION).nupkg -k $$NUGET_KEY -s https://api.nuget.org/v3/index.json']
+  secretEnv: ['NUGET_KEY']
 timeout: 240s
 
 secrets:
