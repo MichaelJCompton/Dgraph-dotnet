@@ -40,7 +40,7 @@ namespace DgraphDotNet {
 		protected System.Object ThisClientMutex => clientMutex;
 
 		private readonly List<IMutation> batches = new List<IMutation>();
-		private readonly List<Mutex> batchesMutexes = new List<Mutex>();
+		private readonly List<SemaphoreSlim> batchesMutexes = new List<SemaphoreSlim>();
 
 		protected int NumBatches => batches.Count;
 
@@ -57,78 +57,81 @@ namespace DgraphDotNet {
 
 				for (int i = 0; i < numBatches; i++) {
 					batches.Add(new Mutation());
-					batchesMutexes.Add(new Mutex());
+					batchesMutexes.Add(new SemaphoreSlim(1));
 				}
 			}
 		}
 
-		public void BatchAddEdge(Edge edge) {
+		public async Task  BatchAddEdge(Edge edge) {
 			AssertNotDisposed();
 
 			if (edge != null) {
-				// int is atomic and it's ok if we get multiples seeing the same values.
-				Task t = Task.Factory.StartNew(() => BatchUpdate(addToBatch++, (IMutation req) => { req.AddEdge(edge); }));
+				await BatchUpdate((IMutation req) => { req.AddEdge(edge); });
 			}
 		}
 
-		public void BatchAddProperty(Property property) {
+		public async Task BatchAddProperty(Property property) {
 			AssertNotDisposed();
 
 			if (property != null) {
-				Task t = Task.Factory.StartNew(() => BatchUpdate(addToBatch++, (IMutation req) => { req.AddProperty(property); }));
+				await BatchUpdate((IMutation req) => { req.AddProperty(property); });
 			}
 		}
 
-		public void BatchDeleteEdge(Edge edge) {
+		public async Task BatchDeleteEdge(Edge edge) {
 			AssertNotDisposed();
 
 			if (edge != null) {
-				Task t = Task.Factory.StartNew(() => BatchUpdate(addToBatch++, (IMutation req) => { req.DeleteEdge(edge); }));
+				await BatchUpdate((IMutation req) => { req.DeleteEdge(edge); });
 			}
 		}
 
-		public void BatchDeleteProperty(Property property) {
+		public async Task BatchDeleteProperty(Property property) {
 			AssertNotDisposed();
 
 			if (property != null) {
-				Task t = Task.Factory.StartNew(() => BatchUpdate(addToBatch++, (IMutation req) => { req.DeleteProperty(property); }));
+				await BatchUpdate((IMutation req) => { req.DeleteProperty(property); });
 			}
 		}
 
-		private void BatchUpdate(int batch, Action<IMutation> updateFN) {
-			batchesMutexes[batch].WaitOne();
+		private async Task BatchUpdate(Action<IMutation> updateFN) {
+			// doesn't really matter if threads compete here and end up getting
+			// the same batch.  We just need it to roll around.
+			var batch = addToBatch;
+			addToBatch = (batch  + 1) % batches.Count;
+			await batchesMutexes[batch].WaitAsync();
 			try {
 				updateFN(batches[batch]);
 				if (batches[batch].NumAdditions + batches[batch].NumDeletions >= batchSize) {
-					SubmittBatch(batch);
+					await SubmittBatch(batch);
 					batches[batch] = new Mutation();
 				}
 			} finally {
-				batchesMutexes[batch].ReleaseMutex();
+				batchesMutexes[batch].Release();
 			}
 		}
 
 		// must hold the batch mutex to call this
-		private void SubmittBatch(int batch) {
+		private async Task SubmittBatch(int batch) {
 			using(var txn = NewTransactionWithMutations()) {
-				var err = batches[batch].SubmitTo(txn);
+				var err = await batches[batch].SubmitTo(txn);
 				if(err.IsFailed) {
 					FailBatch(batches[batch]);
 				}
 			}
 		}
 
-		public void FlushBatches() {
+		public async Task FlushBatches() {
 			for (int i = 0; i < NumBatches; i++) {
-				batchesMutexes[i].WaitOne();
-				SubmittBatch(i);
+				await batchesMutexes[i].WaitAsync();
+				await SubmittBatch(i);
 			}
 
 			// At this point all the batches are empty
 			// and all the locks are held here.
 
 			for (int i = 0; i < NumBatches; i++) {
-				batchesMutexes[i].ReleaseMutex();
+				batchesMutexes[i].Release();
 			}
 
 			// ... but no guarantee that some other user thread hasn't added 

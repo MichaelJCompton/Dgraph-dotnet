@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Threading.Tasks;
 using DgraphDotNet.Graph;
 using DgraphDotNet.Transactions;
 
@@ -29,7 +30,7 @@ namespace DgraphDotNet {
         /// this function causes Dgraph to allocate a UID for the node (though
         /// the node isn't stored until it's added to an edge in a request).
         /// </remarks> 
-        FluentResults.Result<INamedNode> GetOrCreateNode(string name);
+        Task<FluentResults.Result<INamedNode>> GetOrCreateNode(string name);
 
         bool IsNodeName(string name);
 

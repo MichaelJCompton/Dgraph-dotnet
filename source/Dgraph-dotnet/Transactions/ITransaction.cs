@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 
 namespace DgraphDotNet.Transactions {
 
@@ -34,16 +35,16 @@ namespace DgraphDotNet.Transactions {
         /// <summary>
         /// Any JSON add mutation. See https://docs.dgraph.io/mutations/#json-mutation-format
         /// </summary>
-        FluentResults.Result<IDictionary<string, string>> Mutate(string json);
+        Task<FluentResults.Result<IDictionary<string, string>>> Mutate(string json);
 
         /// <summary>
         /// Any JSON delete mutation. See https://docs.dgraph.io/mutations/#json-mutation-format
         /// </summary>
-        FluentResults.Result Delete(string json);
+        Task<FluentResults.Result> Delete(string json);
 
-        void Discard();
+        Task Discard();
         
-        FluentResults.Result Commit();
+        Task<FluentResults.Result> Commit();
     }
 
     public enum TransactionState { OK, Committed, Aborted, Error }

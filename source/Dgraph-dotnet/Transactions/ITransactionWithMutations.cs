@@ -1,5 +1,5 @@
 using System.Collections.Generic;
-
+using System.Threading.Tasks;
 
 namespace DgraphDotNet.Transactions
 {
@@ -7,6 +7,6 @@ namespace DgraphDotNet.Transactions
     {
         IMutation NewMutation();
 
-        FluentResults.Result<IDictionary<string, string>> ApiMutate(Api.Mutation mutation);
+        Task<FluentResults.Result<IDictionary<string, string>>> ApiMutate(Api.Mutation mutation);
     }
 }

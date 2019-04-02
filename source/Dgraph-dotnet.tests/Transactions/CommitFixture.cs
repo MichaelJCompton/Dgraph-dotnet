@@ -1,4 +1,5 @@
 using System.Linq;
+using System.Threading.Tasks;
 using Api;
 using DgraphDotNet;
 using DgraphDotNet.Transactions;
@@ -12,45 +13,45 @@ namespace Dgraph_dotnet.tests.Transactions {
     public class CommitFixture : TransactionFixtureBase {
 
         [Test]
-        public void Commit_SetsTransactionStateToCommitted() {
+        public async Task Commit_SetsTransactionStateToCommitted() {
             var client = Substitute.For<IDgraphClientInternal>();
             var txn = new Transaction(client);
-            txn.Commit();
+            await txn.Commit();
 
             txn.TransactionState.Should().Be(TransactionState.Committed);
         }
 
         [Test]
-        public void Commit_ClientNotReceiveCommitIfNoMutation() {
+        public async Task Commit_ClientNotReceiveCommitIfNoMutation() {
             var client = Substitute.For<IDgraphClientInternal>();
             var txn = new Transaction(client);
-            txn.Commit();
+            await txn.Commit();
 
-            client.DidNotReceive().Commit(Arg.Any<TxnContext>());
+            await client.DidNotReceive().Commit(Arg.Any<TxnContext>());
         }
 
         [Test]
-        public void Commit_ClientReceivedCommitIfMutation() {
+        public async Task Commit_ClientReceivedCommitIfMutation() {
             (var client, _) = MinimalClientForMutation();
 
             var txn = new Transaction(client);
 
-            txn.Mutate("{ }");
-            txn.Commit();
+            await txn.Mutate("{ }");
+            await txn.Commit();
 
-            client.Received().Commit(Arg.Any<TxnContext>());
+            await client.Received().Commit(Arg.Any<TxnContext>());
         }
 
         [Test]
-        public void Commit_FailsOnException() {
+        public async Task Commit_FailsOnException() {
             (var client, _) = MinimalClientForMutation();
             client
                 .When(fake => fake.Commit(Arg.Any<TxnContext>()))
                 .Do(call => { throw new RpcException(new Status(), "Something failed"); });
             var txn = new Transaction(client);
 
-            txn.Mutate("{ }");
-            var result = txn.Commit();
+            await txn.Mutate("{ }");
+            var result = await txn.Commit();
 
             result.IsFailed.Should().BeTrue();
             result.Errors.First().Should().BeOfType<ExceptionalError>();

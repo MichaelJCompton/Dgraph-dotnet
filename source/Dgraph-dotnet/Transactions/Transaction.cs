@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Threading.Tasks;
 using Api;
 using DgraphDotNet.Schema;
 using FluentResults;
@@ -27,11 +28,11 @@ namespace DgraphDotNet.Transactions {
             Context = new TxnContext();
         }
 
-        public FluentResults.Result<string> Query(string queryString) {
-            return QueryWithVars(queryString, new Dictionary<string, string>());
+        public async Task<FluentResults.Result<string>> Query(string queryString) {
+            return await QueryWithVars(queryString, new Dictionary<string, string>());
         }
 
-        public FluentResults.Result<string> QueryWithVars(string queryString, Dictionary<string, string> varMap) {
+        public async Task<FluentResults.Result<string>> QueryWithVars(string queryString, Dictionary<string, string> varMap) {
             AssertNotDisposed();
 
             if (TransactionState != TransactionState.OK) {
@@ -44,7 +45,7 @@ namespace DgraphDotNet.Transactions {
                 request.Vars.Add(varMap);
                 request.StartTs = Context.StartTs;
 
-                var queryResponse = Client.Query(request);
+                var queryResponse = await Client.Query(request);
 
                 var err = MergeContext(queryResponse.Txn);
 
@@ -59,18 +60,18 @@ namespace DgraphDotNet.Transactions {
             }
         }
 
-        public FluentResults.Result<DgraphSchema> SchemaQuery() {
-            return SchemaQuery("schema { }");
+        public async Task<FluentResults.Result<DgraphSchema>> SchemaQuery() {
+            return await SchemaQuery("schema { }");
         }
 
-        public FluentResults.Result<DgraphSchema> SchemaQuery(string schemaQuery) {
+        public async Task<FluentResults.Result<DgraphSchema>> SchemaQuery(string schemaQuery) {
             AssertNotDisposed();
 
-            if(!schemaQuery.Trim().StartsWith("schema")) {
+            if (!schemaQuery.Trim().StartsWith("schema")) {
                 return Results.Fail<DgraphSchema>("Not a schema query.");
             }
 
-            var result = Query(schemaQuery);
+            var result = await Query(schemaQuery);
             if (result.IsFailed) {
                 return result.ToResult<DgraphSchema>();
             }
@@ -82,23 +83,23 @@ namespace DgraphDotNet.Transactions {
             }
         }
 
-        public FluentResults.Result<IDictionary<string, string>> Mutate(string json) {
+        public async Task<FluentResults.Result<IDictionary<string, string>>> Mutate(string json) {
             AssertNotDisposed();
 
             var mut = new Api.Mutation();
             mut.SetJson = Google.Protobuf.ByteString.CopyFromUtf8(json);
-            return Mutate(mut);
+            return await Mutate(mut);
         }
 
-        public FluentResults.Result Delete(string json) {
+        public async Task<FluentResults.Result> Delete(string json) {
             AssertNotDisposed();
 
             var mut = new Api.Mutation();
             mut.DeleteJson = Google.Protobuf.ByteString.CopyFromUtf8(json);
-            return Mutate(mut).ToResult();
+            return (await Mutate(mut)).ToResult();
         }
 
-        internal FluentResults.Result<IDictionary<string, string>> Mutate(Api.Mutation mutation) {
+        internal async Task<FluentResults.Result<IDictionary<string, string>>> Mutate(Api.Mutation mutation) {
             AssertNotDisposed();
 
             if (TransactionState != TransactionState.OK) {
@@ -116,7 +117,7 @@ namespace DgraphDotNet.Transactions {
 
             try {
                 mutation.StartTs = Context.StartTs;
-                var assigned = Client.Mutate(mutation);
+                var assigned = await Client.Mutate(mutation);
 
                 if (mutation.CommitNow) {
                     TransactionState = TransactionState.Committed;
@@ -137,7 +138,7 @@ namespace DgraphDotNet.Transactions {
                 // (some mutations could have applied but not others, but we don't know
                 // which ones).  Discarding the transaction enforces that the user
                 // cannot use the txn further.
-                Discard(); // Ignore error - user should see the original error.
+                await Discard(); // Ignore error - user should see the original error.
 
                 TransactionState = TransactionState.Error; // overwrite the aborted value
                 return Results.Fail<IDictionary<string, string>>(new FluentResults.ExceptionalError(rpcEx));
@@ -145,7 +146,7 @@ namespace DgraphDotNet.Transactions {
         }
 
         // Must be ok to call multiple times!
-        public void Discard() {
+        public async Task Discard() {
             if (TransactionState == TransactionState.Committed) {
                 return;
             }
@@ -160,14 +161,14 @@ namespace DgraphDotNet.Transactions {
                 Context.Aborted = true;
 
                 try {
-                    Client.Discard(Context);
+                    await Client.Discard(Context);
                 } catch (RpcException) {
                     // Eat it ... nothing else to do? Dgraph will clean up eventually?
                 }
             }
         }
 
-        public FluentResults.Result Commit() {
+        public async Task<FluentResults.Result> Commit() {
             AssertNotDisposed();
 
             if (TransactionState != TransactionState.OK) {
@@ -181,7 +182,7 @@ namespace DgraphDotNet.Transactions {
             }
 
             try {
-                Client.Commit(Context);
+                await Client.Commit(Context);
                 return Results.Ok();
             } catch (RpcException rpcEx) {
                 // I'm not 100% sure here - so what happens if the transaction
@@ -233,14 +234,18 @@ namespace DgraphDotNet.Transactions {
         }
 
         public void Dispose() {
-            Disposed = true;
 
-            Discard(); // like all dispose interface calls, it's safe to call Discard() many times
-            //
-            // might need to allow some time here cause there's a deadline on
-            // object clean up.  So I might need to set a deadline that gets
-            // passed to the backend call so we don't wait on the Dgraph call to
-            // succeed?
+            if (!Disposed && TransactionState == TransactionState.OK) {
+                Disposed = true;
+
+                Task.Run(() => Discard());
+                //
+                // This makes it just run in another thread?  So this thread
+                // runs off an gets back to work and we don't really care how
+                // the Discard() went.  But can this race with disposal of
+                // everything?  See how it goes, but maybe nothing should be
+                // done here and we just expect Dgraph to clean up?
+            }
         }
 
         #endregion

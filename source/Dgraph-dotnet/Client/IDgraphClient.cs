@@ -60,7 +60,7 @@ namespace DgraphDotNet {
         /// <summary>
         /// Returns the Dgraph version string.
         /// </summary>
-        FluentResults.Result<string> CheckVersion();
+        Task<FluentResults.Result<string>> CheckVersion();
 
         ITransaction NewTransaction();
 
@@ -71,7 +71,7 @@ namespace DgraphDotNet {
         /// Dgraph's "func: eq", so values are limmited to:
         /// https://docs.dgraph.io/master/query-language/#inequality
         /// </summary>
-        FluentResults.Result<(INode, bool)> Upsert(string predicate, GraphValue value, int maxRetry = 1);
+        Task<FluentResults.Result<(INode, bool)>> Upsert(string predicate, GraphValue value, int maxRetry = 1);
 
         // FIXME: To come are options for TLS, setting policy for retries etc
         // and managing connections

@@ -103,36 +103,38 @@ namespace DgraphDotNet {
             }
         }
 
-        public FluentResults.Result<string> CheckVersion() {
+        public async Task<FluentResults.Result<string>> CheckVersion() {
             AssertNotDisposed();
 
             try {
-                var versionResult = connections.Values.ElementAt(rnd.Next(connections.Count)).CheckVersion();
+                var versionResult = await connections.Values.ElementAt(rnd.Next(connections.Count)).CheckVersion();
                 return Results.Ok<string>(versionResult.Tag);
             } catch (RpcException rpcEx) {
                 return Results.Fail<string>(new FluentResults.ExceptionalError(rpcEx));
             }
         }
 
-        public FluentResults.Result<DgraphSchema> SchemaQuery() {
-            return SchemaQuery("schema { }");
+        public async Task<FluentResults.Result<DgraphSchema>> SchemaQuery() {
+            return await SchemaQuery("schema { }");
         }
 
-        public FluentResults.Result<DgraphSchema> SchemaQuery(string schemaQuery) {
+        public async Task<FluentResults.Result<DgraphSchema>> SchemaQuery(string schemaQuery) {
+            AssertNotDisposed();
+            
             using(var transaction = NewTransaction()) {
-                return transaction.SchemaQuery(schemaQuery);
+                return await transaction.SchemaQuery(schemaQuery);
             }
         }
 
-        public FluentResults.Result<string> Query(string queryString) {
+        public async Task<FluentResults.Result<string>> Query(string queryString) {
             AssertNotDisposed();
 
-            return QueryWithVars(queryString, new Dictionary<string, string>());
+            return await QueryWithVars(queryString, new Dictionary<string, string>());
         }
 
-        public FluentResults.Result<string> QueryWithVars(string queryString, Dictionary<string, string> varMap) {
+        public async Task<FluentResults.Result<string>> QueryWithVars(string queryString, Dictionary<string, string> varMap) {
             using(var transaction = NewTransaction()) {
-                return transaction.QueryWithVars(queryString, varMap);
+                return await transaction.QueryWithVars(queryString, varMap);
             }
         }
 
@@ -142,7 +144,7 @@ namespace DgraphDotNet {
             return transactionFactory.NewTransaction(this);
         }
 
-        public FluentResults.Result<(INode, bool)> Upsert(string predicate, GraphValue value, int maxRetrys = 1) {
+        public async Task<FluentResults.Result<(INode, bool)>> Upsert(string predicate, GraphValue value, int maxRetrys = 1) {
             AssertNotDisposed();
 
             var query = $"{{ q(func: eq({predicate}, \"{value.ToString()}\")) {{ uid }} }}";
@@ -162,7 +164,7 @@ namespace DgraphDotNet {
                 retryRemaining--;
 
                 using(var txn = NewTransaction()) {
-                    var queryResult = txn.Query(query);
+                    var queryResult = await txn.Query(query);
 
                     if (queryResult.IsFailed) {
                         result = addErr(result, queryResult.ToResult<(INode, bool)>());
@@ -170,12 +172,12 @@ namespace DgraphDotNet {
                     }
 
                     if (String.Equals(queryResult.Value, "{\"q\":[]}", StringComparison.Ordinal)) {
-                        var assigned = txn.Mutate($"{{ \"uid\": \"_:{newNodeBlankName}\", \"{predicate}\": \"{value.ToString()}\" }}");
+                        var assigned = await txn.Mutate($"{{ \"uid\": \"_:{newNodeBlankName}\", \"{predicate}\": \"{value.ToString()}\" }}");
                         if (assigned.IsFailed) {
                             result = addErr(result, assigned.ToResult<(INode, bool)>());
                             continue;
                         }
-                        var err = txn.Commit();
+                        var err = await txn.Commit();
                         if (err.IsSuccess) {
                             var UIDasString = assigned.Value[newNodeBlankName].Replace("0x", string.Empty); // why doesn't UInt64.TryParse() work with 0x...???
                             if (UInt64.TryParse(UIDasString, NumberStyles.HexNumber, CultureInfo.InvariantCulture, out var UID)) {
@@ -202,28 +204,28 @@ namespace DgraphDotNet {
             return result;
         }
 
-        public Response Query(Api.Request req) {
+        public async Task<Response> Query(Api.Request req) {
             AssertNotDisposed();
 
-            return connections.Values.ElementAt(rnd.Next(connections.Count)).Query(req);
+            return await connections.Values.ElementAt(rnd.Next(connections.Count)).Query(req);
         }
 
-        public Assigned Mutate(Api.Mutation mut) {
+        public async Task<Assigned> Mutate(Api.Mutation mut) {
             AssertNotDisposed();
 
-            return connections.Values.ElementAt(rnd.Next(connections.Count)).Mutate(mut);
+            return await connections.Values.ElementAt(rnd.Next(connections.Count)).Mutate(mut);
         }
 
-        public void Commit(TxnContext context) {
+        public async Task Commit(TxnContext context) {
             AssertNotDisposed();
 
-            connections.Values.ElementAt(rnd.Next(connections.Count)).Commit(context);
+            await connections.Values.ElementAt(rnd.Next(connections.Count)).Commit(context);
         }
 
-        public void Discard(TxnContext context) {
+        public async Task Discard(TxnContext context) {
             AssertNotDisposed();
 
-            connections.Values.ElementAt(rnd.Next(connections.Count)).Discard(context);
+            await connections.Values.ElementAt(rnd.Next(connections.Count)).Discard(context);
         }
 
         #endregion

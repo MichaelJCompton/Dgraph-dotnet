@@ -9,11 +9,11 @@ namespace DgraphDotNet {
 	internal interface IGRPCConnection : IDisposable {
 		Status LastKnownStatus { get; set; }
 		Task Alter(Api.Operation op);
-        Api.Version CheckVersion();
-		Response Query(Api.Request req);
-		Assigned Mutate(Api.Mutation mut);
-		void Commit(TxnContext context);
-		void Discard(TxnContext context);
+        Task<Api.Version> CheckVersion();
+		Task<Response> Query(Api.Request req);
+		Task<Assigned> Mutate(Api.Mutation mut);
+		Task Commit(TxnContext context);
+		Task Discard(TxnContext context);
 	}
 
 	/// <summary>
@@ -47,8 +47,6 @@ namespace DgraphDotNet {
 
 		public bool ConnectionOK => LastKnownStatus.StatusCode == StatusCode.OK;
 
-		// FIXME: add checkversion
-
 		// FIXME: should allow cancellation tokens, deadlines, etc??
 
 		#region mutations
@@ -59,34 +57,34 @@ namespace DgraphDotNet {
 			await connection.AlterAsync(op);
 		}
 
-		public Api.Version CheckVersion() {
+		public async Task<Api.Version> CheckVersion() {
 			AssertNotDisposed();
 
-			return connection.CheckVersion(new Check());
+			return await connection.CheckVersionAsync(new Check());
 		}
 
-		public Response Query(Api.Request req) {
+		public async Task<Response> Query(Api.Request req) {
 			AssertNotDisposed();
 
-			return connection.Query(req);
+			return await connection.QueryAsync(req);
 		}
 
-		public Assigned Mutate(Api.Mutation mut) {
+		public async Task<Assigned> Mutate(Api.Mutation mut) {
 			AssertNotDisposed();
 
-			return connection.Mutate(mut);
+			return await connection.MutateAsync(mut);
 		}
 
-		public void Commit(TxnContext context) {
+		public async Task Commit(TxnContext context) {
 			AssertNotDisposed();
 
-			connection.CommitOrAbort(context);
+			await connection.CommitOrAbortAsync(context);
 		}
 
-		public void Discard(TxnContext context) {
+		public async Task Discard(TxnContext context) {
 			AssertNotDisposed();
 
-			connection.CommitOrAbort(context);
+			await connection.CommitOrAbortAsync(context);
 		}
 
 		#endregion

@@ -10,22 +10,23 @@
 
 using System;
 using System.Globalization;
+using System.Threading.Tasks;
 using DgraphDotNet;
 using DgraphDotNet.Graph;
 using FluentResults;
 
 namespace MutationExamples {
     class Program {
-        static void Main(string[] args) {
+        static async Task Main(string[] args) {
 
             using(IDgraphMutationsClient client = DgraphDotNet.Clients.NewDgraphMutationsClient("127.0.0.1:5080")) {
                 client.Connect("127.0.0.1:9080");
 
-                client.AlterSchema(
+                await client.AlterSchema(
                     "Username: string @index(hash) .\n"
                     + "Password: password .");
 
-                var schemaResult = client.SchemaQuery();
+                var schemaResult = await client.SchemaQuery();
                 if(schemaResult.IsFailed) {
                     Console.WriteLine($"Something went wrong getting schema.");
                     return;
@@ -42,7 +43,7 @@ namespace MutationExamples {
 
                     // use Upsert to test for a node and value, and create if
                     // not already in the graph as an atomic operation.
-                    var result = client.Upsert("Username", GraphValue.BuildStringValue(username));
+                    var result = await client.Upsert("Username", GraphValue.BuildStringValue(username));
 
                     if (result.IsFailed) {
                         Console.WriteLine("Something went wrong : " + result);
@@ -66,12 +67,12 @@ namespace MutationExamples {
                             // ... something went wrong
                         } else {
                             mutation.AddProperty(property.Value);
-                            var err = mutation.Submit();
+                            var err = await mutation.Submit();
                             if (err.IsFailed) {
                                 // ... something went wrong
                             }
                         }
-                        txn.Commit();
+                        await txn.Commit();
                     }
                 }
             }

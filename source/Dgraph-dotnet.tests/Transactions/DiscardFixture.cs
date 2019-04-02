@@ -1,4 +1,5 @@
 using System;
+using System.Threading.Tasks;
 using Api;
 using DgraphDotNet;
 using DgraphDotNet.Transactions;
@@ -11,45 +12,45 @@ namespace Dgraph_dotnet.tests.Transactions {
     public class DiscardFixture : TransactionFixtureBase {
 
         [Test]
-        public void Discard_SetsTransactionStateToAborted() {
+        public async Task Discard_SetsTransactionStateToAborted() {
             var client = Substitute.For<IDgraphClientInternal>();
             var txn = new Transaction(client);
-            txn.Discard();
+            await txn.Discard();
 
             txn.TransactionState.Should().Be(TransactionState.Aborted);
         }
 
         [Test]
-        public void Discard_ClientNotReceiveDiscardIfNoMutation() {
+        public async Task Discard_ClientNotReceiveDiscardIfNoMutation() {
             var client = Substitute.For<IDgraphClientInternal>();
             var txn = new Transaction(client);
-            txn.Discard();
+            await txn.Discard();
 
-            client.DidNotReceive().Discard(Arg.Any<TxnContext>());
+            await client.DidNotReceive().Discard(Arg.Any<TxnContext>());
         }
 
         [Test]
-        public void Discard_ClientReceivedDiscardIfMutation() {
+        public async Task Discard_ClientReceivedDiscardIfMutation() {
             (var client, _) = MinimalClientForMutation();
 
             var txn = new Transaction(client);
 
-            txn.Mutate("{ }");
-            txn.Discard();
+            await txn.Mutate("{ }");
+            await txn.Discard();
 
-            client.Received().Discard(Arg.Is<TxnContext>(ctx => ctx.Aborted));
+            await client.Received().Discard(Arg.Is<TxnContext>(ctx => ctx.Aborted));
         }
 
         [Test]
-        public void Discard_DoesntFail() {
+        public async Task Discard_DoesntFail() {
             (var client, _) = MinimalClientForMutation();
             client
                 .When(fake => fake.Discard(Arg.Any<TxnContext>()))
                 .Do(call => { throw new RpcException(new Status(), "Something failed"); });
             var txn = new Transaction(client);
 
-            txn.Mutate("{ }");
-            Action test = () => txn.Discard();
+            await txn.Mutate("{ }");
+            Func<Task> test = async () => await txn.Discard();
 
             test.Should().NotThrow();
         }

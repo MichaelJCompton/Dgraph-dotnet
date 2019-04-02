@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Threading.Tasks;
 using DgraphDotNet.Graph;
 using DgraphDotNet.Transactions;
 
@@ -70,7 +71,7 @@ namespace DgraphDotNet {
         /// of blank node name -> UID for any allocated nodes, or a failed
         /// result and error if there is an error.
         /// </summary>
-        FluentResults.Result<IDictionary<string, string>> Submit();
+        Task<FluentResults.Result<IDictionary<string, string>>> Submit();
 
         /// <summary>
         /// Submit the mutation (in the context of the given transaction).
@@ -78,6 +79,6 @@ namespace DgraphDotNet {
         /// name -> UID for any allocated nodes, or a failed result and error if
         /// there is an error.
         /// </summary>
-        FluentResults.Result<IDictionary<string, string>> SubmitTo(ITransactionWithMutations transaction);
+        Task<FluentResults.Result<IDictionary<string, string>>> SubmitTo(ITransactionWithMutations transaction);
     }
 }

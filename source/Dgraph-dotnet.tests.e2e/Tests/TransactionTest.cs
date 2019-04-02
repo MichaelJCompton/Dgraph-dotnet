@@ -6,12 +6,14 @@ namespace Dgraph_dotnet.tests.e2e.Tests {
         public TransactionTest(DgraphClientFactory clientFactory) : base(clientFactory) { }
 
         public async override Task Test() {
+            await Task.Run(() => {});
+            
             // Test1
             // Test2
             // Test3
         }
 
-        
+
         // This is probably the best way to test handling of transactions
 
         // aborted transactions have no effect

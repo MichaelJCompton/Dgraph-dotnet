@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Threading.Tasks;
 using DgraphDotNet;
 
 namespace DgraphDotNet.Transactions {
@@ -15,10 +16,10 @@ namespace DgraphDotNet.Transactions {
             return new Mutation();
         }
 
-        public FluentResults.Result<IDictionary<string, string>> ApiMutate(Api.Mutation mutation) {
+        public async Task<FluentResults.Result<IDictionary<string, string>>> ApiMutate(Api.Mutation mutation) {
             AssertNotDisposed();
             
-            return base.Mutate(mutation);
+            return await base.Mutate(mutation);
         }
 
     }

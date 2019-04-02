@@ -35,18 +35,18 @@ namespace BatchExample {
 
         private long numProcessed;
 
-        static void Main(string[] args) {
+        static async Task Main(string[] args) {
             var loader = new MovielensBatch();
-            loader.LoadMovieLensData();
+            await loader.LoadMovieLensData();
         }
 
-        public void LoadMovieLensData() {
+        public async Task LoadMovieLensData() {
             try {
                 using(IDgraphBatchingClient client = DgraphDotNet.Clients.NewDgraphBatchingClient("127.0.0.1:5080")) {
                     client.Connect("127.0.0.1:9080");
 
                     // How to check the backend Dgraph version
-                    var version = client.CheckVersion();
+                    var version = await client.CheckVersion();
                     if(version.IsSuccess) {
                         Console.WriteLine($"Connected to Dgraph (version {version.Value})");
                     } else {
@@ -55,10 +55,10 @@ namespace BatchExample {
 
                     // How to set the schema
                     var schema = System.IO.File.ReadAllText(schemaFile);
-                    client.AlterSchema(schema);
+                    await client.AlterSchema(schema);
 
                     // How to query schema
-                    var result = client.SchemaQuery("schema { }");
+                    var result = await client.SchemaQuery("schema { }");
                     if(result.IsFailed) {
                         Console.WriteLine("Something went wrong : " + result);
                         System.Environment.Exit(1);
@@ -75,16 +75,19 @@ namespace BatchExample {
                     //
                     // Client correctly creates and links the nodes, no matter
                     // what order they are read in.
-                    Task.WaitAll(
+                    await Task.WhenAll(
                         ProcessGenres(client),
                         ProcessUsers(client),
                         ProcessMovies(client),
                         ProcessRatings(client));
+                    // There might be some advantage in explicitly minting up
+                    // threads for ^^, but for now this just relies on language
+                    // constructs.
 
                     cancelToken.Cancel();
                     Task.WaitAll(ticker);
 
-                    client.FlushBatches();
+                    await client.FlushBatches();
                 }
 
                 Console.WriteLine("All files processed.");
@@ -96,8 +99,7 @@ namespace BatchExample {
             }
         }
 
-        private Task ProcessGenres(IDgraphBatchingClient client) {
-            return Task.Run(() => {
+        private async Task ProcessGenres(IDgraphBatchingClient client) {
                 // Each line in genre file looks like
                 //
                 // genre-name|genreID
@@ -114,22 +116,20 @@ namespace BatchExample {
                             var split = line.Split(new char[] { '|' });
 
                             if (split.Length == 2) {
-                                var node = client.GetOrCreateNode("genre" + split[1]);
+                                var node = await client.GetOrCreateNode("genre" + split[1]);
                                 if (node.IsSuccess) {
                                     var edge = Clients.BuildProperty(node.Value, "name", GraphValue.BuildStringValue(split[0]));
                                     if (edge.IsSuccess) {
-                                        client.BatchAddProperty(edge.Value);
+                                        await client.BatchAddProperty(edge.Value);
                                     }
                                 }
                             }
                         }
                     }
                 }
-            });
         }
 
-        private Task ProcessUsers(IDgraphBatchingClient client) {
-            return Task.Run(() => {
+        private async Task ProcessUsers(IDgraphBatchingClient client) {
                 // Each line in the user file looks like
                 //
                 // userID|age|genre|occupation|ZIPcode
@@ -145,28 +145,26 @@ namespace BatchExample {
                             var split = line.Split(new char[] { '|' });
 
                             if (split.Length == 5 && long.TryParse(split[1], out long age)) {
-                                var node = client.GetOrCreateNode("user" + split[0]);
+                                var node = await client.GetOrCreateNode("user" + split[0]);
                                 if (node.IsSuccess) {
                                     var ageEdge = Clients.BuildProperty(node.Value, "age", GraphValue.BuildIntValue(age));
                                     var gender = Clients.BuildProperty(node.Value, "gender", GraphValue.BuildStringValue(split[2]));
                                     var occupation = Clients.BuildProperty(node.Value, "occupation", GraphValue.BuildStringValue(split[3]));
                                     var zipcode = Clients.BuildProperty(node.Value, "zipcode", GraphValue.BuildStringValue(split[4]));
                                     if (ageEdge.IsSuccess && gender.IsSuccess && occupation.IsSuccess && zipcode.IsSuccess) {
-                                        client.BatchAddProperty(ageEdge.Value);
-                                        client.BatchAddProperty(gender.Value);
-                                        client.BatchAddProperty(occupation.Value);
-                                        client.BatchAddProperty(zipcode.Value);
+                                        await client.BatchAddProperty(ageEdge.Value);
+                                        await client.BatchAddProperty(gender.Value);
+                                        await client.BatchAddProperty(occupation.Value);
+                                        await client.BatchAddProperty(zipcode.Value);
                                     }
                                 }
                             }
                         }
                     }
                 }
-            });
         }
 
-        private Task ProcessMovies(IDgraphBatchingClient client) {
-            return Task.Run(() => {
+        private async Task ProcessMovies(IDgraphBatchingClient client) {
                 // The lines of the movie file look like
                 //
                 // movieID|movie-name|date||imdb-address|genre0?|genre1?|...|genre18?
@@ -182,20 +180,20 @@ namespace BatchExample {
                             var split = line.Split(new char[] { '|' });
 
                             if (split.Length == 24) {
-                                var movieNode = client.GetOrCreateNode("movie" + split[0]);
+                                var movieNode = await client.GetOrCreateNode("movie" + split[0]);
                                 if (movieNode.IsSuccess) {
                                     var name = Clients.BuildProperty(movieNode.Value, "name", GraphValue.BuildStringValue(split[1]));
                                     if (name.IsSuccess) {
-                                        client.BatchAddProperty(name.Value);
+                                        await client.BatchAddProperty(name.Value);
 
                                         // 1 in the column means the movie has the corresponding genre
                                         for (int i = 5; i < 24; i++) {
                                             if (split[i] == "1") {
-                                                var genreNode = client.GetOrCreateNode("genre" + (i - 5));
+                                                var genreNode = await client.GetOrCreateNode("genre" + (i - 5));
                                                 if (genreNode.IsSuccess) {
                                                     var genre = Clients.BuildEdge(movieNode.Value, "genre", genreNode.Value);
                                                     if (genre.IsSuccess) {
-                                                        client.BatchAddEdge(genre.Value);
+                                                        await client.BatchAddEdge(genre.Value);
                                                     }
                                                 }
                                             }
@@ -206,11 +204,9 @@ namespace BatchExample {
                         }
                     }
                 }
-            });
         }
 
-        private Task ProcessRatings(IDgraphBatchingClient client) {
-            return Task.Run(() => {
+        private async Task ProcessRatings(IDgraphBatchingClient client) {
                 // Each line in the rating file looks like
                 //
                 // userID     movieID     rating       timestamp
@@ -224,22 +220,20 @@ namespace BatchExample {
                             var split = line.Split(new char[] { '\t' });
 
                             if (split.Length == 4) {
-                                var userNode = client.GetOrCreateNode("user" + split[0]);
-                                var movieNode = client.GetOrCreateNode("movie" + split[1]);
+                                var userNode = await client.GetOrCreateNode("user" + split[0]);
+                                var movieNode = await client.GetOrCreateNode("movie" + split[1]);
                                 if (userNode.IsSuccess && movieNode.IsSuccess) {
                                     Dictionary<string, string> facets = new Dictionary<string, string>();
                                     facets.Add("rating", split[2]);
                                     var rated = Clients.BuildEdge(userNode.Value, "rated", movieNode.Value, facets);
                                     if (rated.IsSuccess) {
-                                        client.BatchAddEdge(rated.Value);
+                                        await client.BatchAddEdge(rated.Value);
                                     }
                                 }
                             }
                         }
                     }
                 }
-
-            });
         }
 
         private Task RunTicker(CancellationToken cancelToken) {

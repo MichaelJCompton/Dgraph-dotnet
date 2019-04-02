@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 using DgraphDotNet;
 using DgraphDotNet.Graph;
 using DgraphDotNet.Transactions;
@@ -21,7 +22,7 @@ namespace Dgraph_dotnet.tests.Client {
         }
 
         [Test]
-        public void UpsertAllocatesNewNode() {
+        public async Task UpsertAllocatesNewNode() {
             var txn = Substitute.For<ITransaction>();
             transactionFactory.NewTransaction(client).Returns(txn);
 
@@ -29,7 +30,7 @@ namespace Dgraph_dotnet.tests.Client {
             txn.Mutate(Arg.Any<string>()).Returns(Results.Ok<IDictionary<string, string>>(new Dictionary<string, string> { { "upsertNode", "0x1bf" } }));
             txn.Commit().Returns(Results.Ok());
 
-            var result = client.Upsert("aPredicate", GraphValue.BuildStringValue("aString"));
+            var result = await client.Upsert("aPredicate", GraphValue.BuildStringValue("aString"));
 
             Assert.IsTrue(result.IsSuccess);
             var (node,existed) = result.Value;
@@ -45,13 +46,13 @@ namespace Dgraph_dotnet.tests.Client {
         }
 
         [Test]
-        public void UpsertReturnsExistingNode() { 
+        public async Task UpsertReturnsExistingNode() { 
             var txn = Substitute.For<ITransaction>();
             transactionFactory.NewTransaction(client).Returns(txn);
 
             txn.Query(Arg.Any<string>()).Returns(Results.Ok<string>("{\"q\":[{\"uid\":\"0x1bf\"}]}"));
 
-            var result = client.Upsert("aPredicate", GraphValue.BuildStringValue("aString"));
+            var result = await client.Upsert("aPredicate", GraphValue.BuildStringValue("aString"));
 
             Assert.IsTrue(result.IsSuccess);
             var (node,existed) = result.Value;
@@ -67,7 +68,7 @@ namespace Dgraph_dotnet.tests.Client {
         }
 
         [Test]
-        public void UpsertHandlesTransactionConflict() { 
+        public async Task UpsertHandlesTransactionConflict() { 
             var txn = Substitute.For<ITransaction>();
             transactionFactory.NewTransaction(client).Returns(txn);
 
@@ -75,7 +76,7 @@ namespace Dgraph_dotnet.tests.Client {
             txn.Mutate(Arg.Any<string>()).Returns(Results.Ok<IDictionary<string, string>>(new Dictionary<string, string> { { "upsertNode", "0xfff" } }));
             txn.Commit().Returns(Results.Fail("This transaction had a conflict"));
 
-            var result = client.Upsert("aPredicate", GraphValue.BuildStringValue("aString"));
+            var result = await client.Upsert("aPredicate", GraphValue.BuildStringValue("aString"));
 
             Assert.IsTrue(result.IsSuccess);
             var (node,existed) = result.Value;
@@ -91,13 +92,13 @@ namespace Dgraph_dotnet.tests.Client {
         }
 
         [Test]
-        public void UpsertReturnsError() { 
+        public async Task UpsertReturnsError() { 
             var txn = Substitute.For<ITransaction>();
             transactionFactory.NewTransaction(client).Returns(txn);
 
             txn.Query(Arg.Any<string>()).Returns(Results.Fail<string>("This didn't work"));
 
-            var node = client.Upsert("aPredicate", GraphValue.BuildStringValue("aString"));
+            var node = await client.Upsert("aPredicate", GraphValue.BuildStringValue("aString"));
 
             Assert.IsTrue(node.IsFailed);
         }

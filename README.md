@@ -36,7 +36,7 @@ Grab the [Dgraph-dotnet](https://www.nuget.org/packages/Dgraph-dotnet/) NuGet pa
 
 ## Learning
 
-*The examples are being replaced by automated end-to-end testing that shows how to use the library and gets run on each build against compatible Dgraph versions.  The testing is being built out in source/Dgraph-dotnet.tests.e2e.*
+*The examples are being replaced by automated end-to-end testing that shows how to use the library and gets run on each build against compatible Dgraph versions.  The testing is being built out in source/Dgraph-dotnet.tests.e2e.  The examples projects will be removed as the functionaly they show is tested in the end-to-end tests.*
 
 Checkout the examples in `source/Dgraph-dotnet.examples`.  There's a script in `source/Dgraph-dotnet.examples/scripts` to spin up a dgraph instance to run examples with.
 
@@ -49,6 +49,8 @@ There's three client interfaces.
 * `IDgraphBatchingClient` for the above plus batching updates
 
 Upserts are supported by all three.
+
+Communication with Dgraph is via grpc.  Because that's naturally asynchronous, practically everything in the library is `async`.
 
 ### Objects and JSON
 
@@ -78,8 +80,8 @@ Grab a transaction, serialize your object model to JSON, mutate the graph and co
 ```c#
     using(var transaction = client.NewTransaction()) {
         var json = ...serialize your object model...
-        transaction.Mutate(json);
-        transaction.Commit();
+        await transaction.Mutate(json);
+        await transaction.Commit();
     }
 ```
 
@@ -87,7 +89,7 @@ Or to query the graph.
 
 ```c#
     using(var transaction = client.NewTransaction()) {
-        var res = transaction.Query(query);
+        var res = await transaction.Query(query);
         
         dynamic newObjects = ...deserialize...(res.Value);
 
@@ -117,11 +119,11 @@ Grab a transaction, add as many edge edges/properties to a mutation as required,
         var property = Clients.BuildProperty(node, "someProperty", GraphValue.BuildStringValue("HI"));
         
         mutation.AddProperty(property.Value);
-        var err = mutation.Submit();
+        var err = await mutation.Submit();
         if(err.IsFailed) {
             // ... something went wrong
         }
-        txn.Commit();
+        await txn.Commit();
     }
     
 ```
@@ -147,12 +149,12 @@ Throw in edges
     if (node.IsSuccess) {
         var property = Clients.BuildProperty(node.Value, "name", GraphValue.BuildStringValue("AName));
         if (property.IsSuccess) {
-            client.BatchAddProperty(property.Value);
+            await client.BatchAddProperty(property.Value);
         }
 
         var edge = Clients.BuildEdge(node.Value, "friend", someOtherNode);  
         if (edge.IsSuccess) {
-            client.BatchAddEdge(edge.Value);
+            await client.BatchAddEdge(edge.Value);
         }
 
     }
@@ -163,7 +165,7 @@ No need to create or submit transactions; the client batches the edges up into t
 When done, flush out any remaning batches
 
 ```c#
-    client.FlushBatches();
+    await client.FlushBatches();
 ```                                                
 
 

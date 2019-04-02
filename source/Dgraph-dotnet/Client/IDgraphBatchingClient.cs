@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Threading.Tasks;
 using DgraphDotNet.Graph;
 
 namespace DgraphDotNet {
@@ -17,25 +18,25 @@ namespace DgraphDotNet {
 		/// Add the edge to a pending batch.  
 		/// </summary>
 		/// <remarks>Has no effect if edge is null</remarks>
-		void BatchAddEdge(Edge edge);
+		Task BatchAddEdge(Edge edge);
 
 		/// <summary>
 		/// Add the property to a pending batch.  
 		/// </summary>
 		/// <remarks>Has no effect if property is null</remarks>
-		void BatchAddProperty(Property property);
+		Task BatchAddProperty(Property property);
 
 		/// <summary>
 		/// Schedule an edge to be deleted by a pending batch.  
 		/// </summary>
 		/// <remarks>Has no effect if edge is null</remarks>
-		void BatchDeleteEdge(Edge edge);
+		Task BatchDeleteEdge(Edge edge);
 
 		/// <summary>
 		/// Schedule a property to be deleted by a pending batch.  
 		/// </summary>
 		/// <remarks>Has no effect if property is null</remarks>
-		void BatchDeleteProperty(Property property);
+		Task BatchDeleteProperty(Property property);
 
 		/// <summary>
 		/// Have any of the batched updates this client has submitted failed.
@@ -56,6 +57,6 @@ namespace DgraphDotNet {
 		/// the next line of user code that some thread hasn't added to batches, 
 		/// unless this is assured externally.
 		/// </summary>
-		void FlushBatches();
+		Task FlushBatches();
 	}
 }

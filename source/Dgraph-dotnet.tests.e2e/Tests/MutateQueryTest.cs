@@ -15,8 +15,6 @@ namespace Dgraph_dotnet.tests.e2e.Tests {
 
         private Person Person1, Person2, Person3;
 
-        private readonly string PersonToEdit = "Person3";
-
         private string QueryByUid(string uid) =>
             "{  "
             + $"    q(func: uid({uid})) "
@@ -110,7 +108,7 @@ query people($name: string) {
                 var personList = new List<Person> { Person2, Person3 };
                 var json = JsonConvert.SerializeObject(personList);
 
-                var result = transaction.Mutate(json);
+                var result = await transaction.Mutate(json);
                 if (result.IsFailed) {
                     throw new DgraphDotNetTestFailure("Mutation failed", result);
                 }
@@ -136,7 +134,7 @@ query people($name: string) {
                 Person2.Uid = result.Value[Person2.Uid.Substring(2)];
                 Person3.Uid = result.Value[Person3.Uid.Substring(2)];
 
-                transaction.Commit();
+                await transaction.Commit();
             }
         }
 
@@ -145,7 +143,7 @@ query people($name: string) {
             var people = new List<Person> { Person1, Person2, Person3 };
 
             foreach (var person in people) {
-                var queryPerson = client.Query(QueryByUid(person.Uid));
+                var queryPerson = await client.Query(QueryByUid(person.Uid));
                 if (queryPerson.IsFailed) {
                     throw new DgraphDotNetTestFailure("Query failed", queryPerson);
                 }
@@ -164,7 +162,7 @@ query people($name: string) {
                 // instead.
                 var json = JsonConvert.SerializeObject(Person3);
 
-                var result = transaction.Mutate(json);
+                var result = await transaction.Mutate(json);
                 if (result.IsFailed) {
                     throw new DgraphDotNetTestFailure("Mutation failed", result);
                 }
@@ -172,10 +170,10 @@ query people($name: string) {
                 // no nodes were allocated
                 result.Value.Count.Should().Be(0);
 
-                transaction.Commit();
+                await transaction.Commit();
             }
 
-            var queryPerson = client.Query(QueryByUid(Person3.Uid));
+            var queryPerson = await client.Query(QueryByUid(Person3.Uid));
             if (queryPerson.IsFailed) {
                 throw new DgraphDotNetTestFailure("Query failed", queryPerson);
             }
@@ -185,7 +183,7 @@ query people($name: string) {
 
         private async Task QueryWithVars(IDgraphClient client) {
 
-            var queryResult = client.QueryWithVars(QueryByName, new Dictionary<string, string> { { "$name", Person3.Name } });
+            var queryResult = await client.QueryWithVars(QueryByName, new Dictionary<string, string> { { "$name", Person3.Name } });
             if (queryResult.IsFailed) {
                 throw new DgraphDotNetTestFailure("Query failed", queryResult);
             }
@@ -197,16 +195,16 @@ query people($name: string) {
             using(var transaction = client.NewTransaction()) {
 
                 // delete a node by passing JSON like this to delete
-                var deleteResult = transaction.Delete($"{{\"uid\": \"{Person1.Uid}\"}}");
+                var deleteResult = await transaction.Delete($"{{\"uid\": \"{Person1.Uid}\"}}");
                 if (deleteResult.IsFailed) {
                     throw new DgraphDotNetTestFailure("Delete failed", deleteResult);
                 }
 
-                transaction.Commit();
+                await transaction.Commit();
             }
 
             // that person should be gone...
-            var queryPerson1 = client.Query(QueryByUid(Person1.Uid));
+            var queryPerson1 = await client.Query(QueryByUid(Person1.Uid));
             if (queryPerson1.IsFailed) {
                 throw new DgraphDotNetTestFailure("Query failed", queryPerson1);
             }
@@ -225,7 +223,7 @@ query people($name: string) {
             // -----------------------------------------------------------
             // ... but watch out, Dgraph can leave dangling references :-(
             // -----------------------------------------------------------
-            var queryPerson3 = client.Query(QueryByUid(Person3.Uid));
+            var queryPerson3 = await client.Query(QueryByUid(Person3.Uid));
             if (queryPerson3.IsFailed) {
                 throw new DgraphDotNetTestFailure("Query failed", queryPerson3);
             }

@@ -11,6 +11,7 @@ using System.Threading;
 using DgraphDotNet.Graph;
 using DgraphDotNet.Transactions;
 using Grpc.Core;
+using System.Threading.Tasks;
 
 /* 
  * service Zero {
@@ -89,14 +90,14 @@ namespace DgraphDotNet {
 			return Results.Ok<IBlankNode>(new BlankNode(blankPrefix + Interlocked.Increment(ref blanksAllocated)));
 		}
 
-		public FluentResults.Result<INamedNode> GetOrCreateNode(string name) {
+		public async Task<FluentResults.Result<INamedNode>> GetOrCreateNode(string name) {
 			AssertNotDisposed();
 
 			if (string.IsNullOrEmpty(name)) {
 				return Results.Fail<INamedNode>(new BadArgs("Empty args"));
 			}
 
-			return NodeFromUIDOption(NextUID(), uid => GetOrCreateNode(name, knownNodes, () =>(INamedNode) new NamedNode(uid, name)));
+			return NodeFromUIDOption(await NextUID(), uid => GetOrCreateNode(name, knownNodes, () =>(INamedNode) new NamedNode(uid, name)));
 		}
 
 		public bool IsNodeName(string name) => knownNodes.ContainsKey(name);
@@ -145,7 +146,7 @@ namespace DgraphDotNet {
 		/// Allocate the next UID from this client's range allocated by the backend.
 		/// If there are no more, this will go back to the server to ask for another range.
 		/// </summary>
-		private FluentResults.Result<ulong> NextUID() {
+		private async Task<FluentResults.Result<ulong>> NextUID() {
 			if (uidCurrent <= uidMaxAllocated) {
 				return FluentResults.Results.Ok<ulong>(uidCurrent++);
 			}
@@ -163,7 +164,7 @@ namespace DgraphDotNet {
 					zeroChannel = new Channel(zeroAddr, ChannelCredentials.Insecure);
 					zeroClient = new Zero.ZeroClient(zeroChannel);
 				}
-				var assigned = zeroClient.AssignUids(new Pb.Num() { Val = 1000 });
+				var assigned = await zeroClient.AssignUidsAsync(new Pb.Num() { Val = 1000 });
 				uidCurrent = assigned.StartId;
 				uidMaxAllocated = assigned.EndId;
 				return FluentResults.Results.Ok<ulong>(uidCurrent++);

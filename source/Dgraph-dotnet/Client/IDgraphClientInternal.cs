@@ -1,3 +1,4 @@
+using System.Threading.Tasks;
 using Api;
 
 namespace DgraphDotNet {
@@ -8,13 +9,13 @@ namespace DgraphDotNet {
     /// </summary>
     internal interface IDgraphClientInternal {
 
-        Response Query(Request req);
+        Task<Response> Query(Request req);
 
-        Assigned Mutate(Api.Mutation mut);
+        Task<Assigned> Mutate(Api.Mutation mut);
 
-        void Commit(TxnContext context);
+        Task Commit(TxnContext context);
 
-        void Discard(TxnContext context);
+        Task Discard(TxnContext context);
         
     }
 }

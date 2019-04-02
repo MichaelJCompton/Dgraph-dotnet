@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Threading.Tasks;
 using Api;
 using DgraphDotNet.Graph;
 using DgraphDotNet.Transactions;
@@ -53,16 +54,16 @@ namespace DgraphDotNet {
 
         public int NumDeletions => ApiMutation.Del.Count;
 
-        public FluentResults.Result<IDictionary<string, string>> Submit() {
+        public async Task<FluentResults.Result<IDictionary<string, string>>> Submit() {
             if(transaction != null) {
-                return transaction.ApiMutate(ApiMutation);
+                return await transaction.ApiMutate(ApiMutation);
             } else {
                 return Results.Fail<IDictionary<string, string>>("No transaction set");
             }
         }
 
-        public FluentResults.Result<IDictionary<string, string>> SubmitTo(ITransactionWithMutations transaction) {
-            return transaction.ApiMutate(ApiMutation);
+        public async Task<FluentResults.Result<IDictionary<string, string>>> SubmitTo(ITransactionWithMutations transaction) {
+            return await transaction.ApiMutate(ApiMutation);
         }
 
         public (List<Edge>, List<Property>) AllAddLinks() {

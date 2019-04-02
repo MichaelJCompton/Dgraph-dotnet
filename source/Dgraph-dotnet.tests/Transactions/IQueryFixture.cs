@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Threading.Tasks;
 using Api;
 using DgraphDotNet;
 using DgraphDotNet.Transactions;
@@ -24,7 +25,7 @@ namespace Dgraph_dotnet.tests.Transactions {
         #region SchemaQuery
 
         [Test]
-        public void SchemaQuery_ReturnsSchema() {
+        public async Task SchemaQuery_ReturnsSchema() {
             (var client, var response) = MinimalClientForQuery();
             response.Json = ByteString.CopyFrom(Encoding.UTF8.GetBytes("{  }"));
             var txn = new Transaction(client);
@@ -57,7 +58,7 @@ namespace Dgraph_dotnet.tests.Transactions {
 
             response.Json = ByteString.CopyFrom(Encoding.UTF8.GetBytes(queryResult));
 
-            var result = txn.SchemaQuery("schema { }");
+            var result = await txn.SchemaQuery("schema { }");
 
             result.IsSuccess.Should().Be(true);
 
@@ -66,7 +67,7 @@ namespace Dgraph_dotnet.tests.Transactions {
         }
 
         [Test]
-        public void SchemaQuery_PassesOnQuery() {
+        public async Task SchemaQuery_PassesOnQuery() {
             (var client, var response) = MinimalClientForQuery();
             response.Json = ByteString.CopyFrom(Encoding.UTF8.GetBytes("{  }"));
             var txn = new Transaction(client);
@@ -77,29 +78,29 @@ schema(pred: [name, friend]) {
     index
 }";
 
-            var result = txn.SchemaQuery(theQuery);
+            var result = await txn.SchemaQuery(theQuery);
 
-            client.Received().Query(Arg.Is<Request>(r => r.Query.Equals(theQuery)));
+            await client.Received().Query(Arg.Is<Request>(r => r.Query.Equals(theQuery)));
         }
 
         [Test]
-        public void SchemaQuery_MintsEmptySchemaQuery() {
+        public async Task SchemaQuery_MintsEmptySchemaQuery() {
             (var client, var response) = MinimalClientForQuery();
             response.Json = ByteString.CopyFrom(Encoding.UTF8.GetBytes("{  }"));
             var txn = new Transaction(client);
 
-            var result = txn.SchemaQuery();
+            var result = await txn.SchemaQuery();
 
-            client.Received().Query(Arg.Is<Request>(r => r.Query.Equals("schema { }")));
+            await client.Received().Query(Arg.Is<Request>(r => r.Query.Equals("schema { }")));
         }
 
         [Test]
-        public void SchemaQuery_FailsIfQueryFails() {
+        public async Task SchemaQuery_FailsIfQueryFails() {
             var client = Substitute.For<IDgraphClientInternal>();
             client.Query(Arg.Any<Request>()).Throws(new RpcException(new Status(), "Something failed"));
             var txn = new Transaction(client);
 
-            var result = txn.SchemaQuery();
+            var result = await txn.SchemaQuery();
 
             result.IsFailed.Should().Be(true);
             result.Errors.First().Should().BeOfType<ExceptionalError>();
@@ -107,11 +108,11 @@ schema(pred: [name, friend]) {
         }
 
         [Test]
-        public void SchemaQuery_FailsIfNotASchemaQuery() {
+        public async Task SchemaQuery_FailsIfNotASchemaQuery() {
             (var client, var response) = MinimalClientForQuery();
             var txn = new Transaction(client);
 
-            var result = txn.SchemaQuery("q(func: uid(0x1)) { blaa }");
+            var result = await txn.SchemaQuery("q(func: uid(0x1)) { blaa }");
 
             result.IsFailed.Should().Be(true);
         }
@@ -127,20 +128,20 @@ schema(pred: [name, friend]) {
         #region Query
 
         [Test]
-        public void Query_PassesOnQuery() {
+        public async Task Query_PassesOnQuery() {
             (var client, var response) = MinimalClientForQuery();
             response.Json = ByteString.CopyFrom(Encoding.UTF8.GetBytes("{  }"));
             var txn = new Transaction(client);
 
             var theQuery = "The really important query";
 
-            var result = txn.Query(theQuery);
+            var result = await txn.Query(theQuery);
 
-            client.Received().Query(Arg.Is<Request>(r => r.Query.Equals(theQuery)));
+            await client.Received().Query(Arg.Is<Request>(r => r.Query.Equals(theQuery)));
         }
 
         [Test]
-        public void Query_PassesOnQueryAndVariables() {
+        public async Task Query_PassesOnQueryAndVariables() {
             (var client, var response) = MinimalClientForQuery();
             response.Json = ByteString.CopyFrom(Encoding.UTF8.GetBytes("{  }"));
             var txn = new Transaction(client);
@@ -148,9 +149,9 @@ schema(pred: [name, friend]) {
             var theQuery = "The really important query";
             var theVars = new Dictionary<string, string> { { "var", "val" } };
 
-            var result = txn.QueryWithVars(theQuery, theVars);
+            var result = await txn.QueryWithVars(theQuery, theVars);
 
-            client.Received().Query(Arg.Is<Request>(r =>
+            await client.Received().Query(Arg.Is<Request>(r =>
                 r.Query.Equals(theQuery)
                 && r.Vars.Count == 1
                 && r.Vars.First().Key.Equals("var")
@@ -158,7 +159,7 @@ schema(pred: [name, friend]) {
         }
 
         [Test]
-        public void Query_PassesBackResult() {
+        public async Task Query_PassesBackResult() {
             (var client, var response) = MinimalClientForQuery();
             var json = "{ some-json }";
             response.Json = ByteString.CopyFrom(Encoding.UTF8.GetBytes(json));
@@ -167,19 +168,19 @@ schema(pred: [name, friend]) {
             var theQuery = "The really important query";
             var theVars = new Dictionary<string, string> { { "var", "val" } };
 
-            var result = txn.QueryWithVars(theQuery, theVars);
+            var result = await txn.QueryWithVars(theQuery, theVars);
 
             result.IsSuccess.Should().BeTrue();
             result.Value.Should().Be(json);
         }
 
         [Test]
-        public void Query_FailsIfError() {
+        public async Task Query_FailsIfError() {
             var client = Substitute.For<IDgraphClientInternal>();
             client.Query(Arg.Any<Request>()).Throws(new RpcException(new Status(), "Something failed"));
             var txn = new Transaction(client);
 
-            var result = txn.Query("throw");
+            var result = await txn.Query("throw");
 
             result.IsFailed.Should().Be(true);
             result.Errors.First().Should().BeOfType<ExceptionalError>();
@@ -187,18 +188,18 @@ schema(pred: [name, friend]) {
         }
 
         [Test]
-        public void Query_FailDoesntChangeTransactionOKState() {
+        public async Task Query_FailDoesntChangeTransactionOKState() {
             var client = Substitute.For<IDgraphClientInternal>();
             client.Query(Arg.Any<Request>()).Throws(new RpcException(new Status(), "Something failed"));
             var txn = new Transaction(client);
 
-            txn.Query("throw");
+            await txn.Query("throw");
 
             txn.TransactionState.Should().Be(TransactionState.OK);
         }
 
         [Test]
-        public void Query_SuccessDoesntChangeTransactionOKState() {
+        public async Task Query_SuccessDoesntChangeTransactionOKState() {
             (var client, var response) = MinimalClientForQuery();
             var json = "{ some-json }";
             response.Json = ByteString.CopyFrom(Encoding.UTF8.GetBytes(json));
@@ -207,7 +208,7 @@ schema(pred: [name, friend]) {
             var theQuery = "The really important query";
             var theVars = new Dictionary<string, string> { { "var", "val" } };
 
-            txn.QueryWithVars(theQuery, theVars);
+            await txn.QueryWithVars(theQuery, theVars);
 
             txn.TransactionState.Should().Be(TransactionState.OK);
         }

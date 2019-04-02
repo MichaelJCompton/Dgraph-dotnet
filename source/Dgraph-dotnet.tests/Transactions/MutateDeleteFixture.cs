@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 using DgraphDotNet.Transactions;
 using FluentAssertions;
 using FluentResults;
@@ -13,49 +14,49 @@ namespace Dgraph_dotnet.tests.Transactions {
     {
         
         [Test]
-        public void Mutate_EmptyMutationDoesNothing() {
+        public async Task Mutate_EmptyMutationDoesNothing() {
             (var client, _) = MinimalClientForMutation();
             var txn = new Transaction(client);
 
-            txn.Mutate(new Api.Mutation());
+            await txn.Mutate(new Api.Mutation());
 
-            client.DidNotReceive().Mutate(Arg.Any<Api.Mutation>());
+            await client.DidNotReceive().Mutate(Arg.Any<Api.Mutation>());
             txn.TransactionState.Should().Be(TransactionState.OK);
         }
 
         [Test]
-        public void Mutate_CommitNowChangesStateToCommitted() {
+        public async Task Mutate_CommitNowChangesStateToCommitted() {
             (var client, _) = MinimalClientForMutation();
             var txn = new Transaction(client);
             var mut = new Api.Mutation();
             mut.CommitNow = true;
             mut.SetJson = Google.Protobuf.ByteString.CopyFromUtf8("{ }");
 
-            txn.Mutate(mut);
+            await txn.Mutate(mut);
 
             txn.TransactionState.Should().Be(TransactionState.Committed);
         }
 
         [Test]
-        public void Mutate_PassesOnMutation() {
+        public async Task Mutate_PassesOnMutation() {
             (var client, _) = MinimalClientForMutation();
             var txn = new Transaction(client);
             var mut = new Api.Mutation();
             mut.SetJson = Google.Protobuf.ByteString.CopyFromUtf8("{ }");
 
-            txn.Mutate(mut);
+            await txn.Mutate(mut);
 
-            client.Received().Mutate(Arg.Is<Api.Mutation>(m => m == mut));
+            await client.Received().Mutate(Arg.Is<Api.Mutation>(m => m == mut));
         }
 
         [Test]
-        public void Mutate_OnlyHasSetJson() {
+        public async Task Mutate_OnlyHasSetJson() {
             (var client, _) = MinimalClientForMutation();
             var txn = new Transaction(client);
 
-            txn.Mutate("{ }");
+            await txn.Mutate("{ }");
 
-            client.Received().Mutate(Arg.Is<Api.Mutation>(
+            await client.Received().Mutate(Arg.Is<Api.Mutation>(
                 mutation => mutation.Del.Count == 0
                 && mutation.DeleteJson.Length == 0
                 && mutation.Set.Count == 0
@@ -63,13 +64,13 @@ namespace Dgraph_dotnet.tests.Transactions {
         }
 
         [Test]
-        public void Delete_OnlyHasDeleteJson() {
+        public async Task Delete_OnlyHasDeleteJson() {
             (var client, _) = MinimalClientForMutation();
             var txn = new Transaction(client);
 
-            txn.Delete("{ }");
+            await txn.Delete("{ }");
 
-            client.Received().Mutate(Arg.Is<Api.Mutation>(
+            await client.Received().Mutate(Arg.Is<Api.Mutation>(
                 mutation => mutation.Del.Count == 0
                 && mutation.DeleteJson.Equals(Google.Protobuf.ByteString.CopyFromUtf8("{ }"))
                 && mutation.Set.Count == 0
@@ -77,14 +78,14 @@ namespace Dgraph_dotnet.tests.Transactions {
         }
 
         [Test]
-        public void Mutate_FailsOnException() {
+        public async Task Mutate_FailsOnException() {
             (var client, _) = MinimalClientForMutation();
             var txn = new Transaction(client);
             var mut = new Api.Mutation();
             mut.SetJson = Google.Protobuf.ByteString.CopyFromUtf8("{ }");
             client.Mutate(Arg.Any<Api.Mutation>()).Throws(new RpcException(new Status(), "Something failed"));
 
-            var result = txn.Mutate(mut);
+            var result = await txn.Mutate(mut);
 
             result.IsFailed.Should().Be(true);
             result.Errors.First().Should().BeOfType<ExceptionalError>();
@@ -92,7 +93,7 @@ namespace Dgraph_dotnet.tests.Transactions {
         }
 
         [Test]
-        public void Mutate_PassesBackResult() {
+        public async Task Mutate_PassesBackResult() {
             (var client, var assigned) = MinimalClientForMutation();
             var txn = new Transaction(client);
             var uids = new Dictionary<string, string> {
@@ -101,7 +102,7 @@ namespace Dgraph_dotnet.tests.Transactions {
             };
             assigned.Uids.Add(uids);
             
-            var result = txn.Mutate("{ }");
+            var result = await txn.Mutate("{ }");
             
             result.IsSuccess.Should().BeTrue();
             result.Value.Should().BeEquivalentTo(uids);
