@@ -20,6 +20,8 @@ Versions of this library match up to Dgraph versions as follows:
 | v0.4.0 .. v0.4.2 | v1.0.9 |
 | v0.5.0 .. v0.5.3 | v1.0.13 |
 
+Checkout the [Changelog](https://github.com/MichaelJCompton/Dgraph-dotnet/blob/master/Changelog.md) for changes between versions.
+
 ## Table of Contents
 - [Getting](#getting)
 - [Learning](#learning)
