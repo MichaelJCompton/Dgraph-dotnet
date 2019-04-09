@@ -9,7 +9,7 @@
     <UserSecretsId>4B25EEB0-5049-481D-ACA3-BB4578990A3C</UserSecretsId>
   </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="GraphSchema.io.Client" Version="0.1.1" />
+    <PackageReference Include="GraphSchema.io.Client" Version="0.2.1" />
     <PackageReference Include="McMaster.Extensions.CommandLineUtils" Version="2.3.3" />
     <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="2.2.0" />
     <PackageReference Include="Microsoft.Extensions.Configuration.EnvironmentVariables" Version="2.2.0" />

@@ -5,16 +5,17 @@ using System.Linq;
 using System.Net.Http;
 using System.Reflection;
 using System.Threading.Tasks;
+using Dgraph_dotnet.tests.e2e.Errors;
 using Dgraph_dotnet.tests.e2e.Orchestration;
 using Dgraph_dotnet.tests.e2e.Tests;
 using DgraphDotNet;
+using GraphSchema.io.Client;
+using GraphSchema.io.Client.Models;
 using McMaster.Extensions.CommandLineUtils;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Net.Http.Headers;
 using Serilog;
-using GraphSchema.io.Client;
-using GraphSchema.io.Client.Models;
 
 namespace Dgraph_dotnet.tests.e2e {
 
@@ -36,8 +37,8 @@ namespace Dgraph_dotnet.tests.e2e {
                 var config = new ConfigurationBuilder()
                     .SetBasePath(Directory.GetCurrentDirectory())
                     .AddJsonFile("appsettings.json", optional : false, reloadOnChange : false)
-                    .AddEnvironmentVariables()
                     .AddUserSecrets<Program>()
+                    .AddEnvironmentVariables("DGDNE2E_")
                     .Build();
 
                 Log.Logger = new LoggerConfiguration()
@@ -49,6 +50,16 @@ namespace Dgraph_dotnet.tests.e2e {
                 var graphschemaIOconnection = new GraphSchemaIOConnection();
                 config.Bind(nameof(GraphSchemaIOConnection), graphschemaIOconnection);
                 services.AddSingleton<GraphSchemaIOConnection>(graphschemaIOconnection);
+
+                if (!graphschemaIOconnection.Endpoint.Equals("localhost")) {
+                    var httpClient = new HttpClient();
+                    httpClient.BaseAddress = new Uri(graphschemaIOconnection.Endpoint);
+
+                    httpClient.DefaultRequestHeaders.Add(HeaderNames.Authorization,
+                        $"X-GraphSchemaIO-ApiKey {graphschemaIOconnection.ApiKeyId}:{graphschemaIOconnection.ApiKeySecret}");
+
+                    services.AddGraphSchemaIOLClient(httpClient);
+                }
 
                 // Inject in every possible test type so that DI will be able to
                 // mint up these for me without me having to do anything to hydrate
@@ -74,6 +85,18 @@ namespace Dgraph_dotnet.tests.e2e {
                 app.Execute(args);
                 return 0;
 
+            } catch (AggregateException aggEx) {
+                foreach(var ex in aggEx.InnerExceptions) {
+                    switch (ex) {
+                        case DgraphDotNetTestFailure testEx:
+                            Log.Error("Test Failed with reason {@Reason}", testEx.FailureReason);
+                            Log.Error(testEx, "Call Stack");
+                        break;
+                        default:
+                            Log.Error(ex, "Unknown Exception Failure");
+                        break;
+                    }
+                }
             } catch (Exception ex) {
                 Log.Error(ex, "Test run failed.");
             } finally {

@@ -5,7 +5,7 @@ namespace Dgraph_dotnet.tests.e2e.Errors
 {
     public class DgraphDotNetTestFailure : Exception
     {
-        private readonly ResultBase FailureReason;
+        public readonly ResultBase FailureReason;
 
         public DgraphDotNetTestFailure(string message) : base(message) { }
 

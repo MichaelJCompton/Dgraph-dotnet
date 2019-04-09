@@ -1,6 +1,7 @@
 using System;
 using System.Linq;
 using System.Net.Http;
+using System.Threading;
 using System.Threading.Tasks;
 using DgraphDotNet;
 using FluentResults;
@@ -8,32 +9,23 @@ using GraphSchema.io.Client;
 using GraphSchema.io.Client.Models;
 using Grpc.Core;
 using Microsoft.Net.Http.Headers;
+using Serilog;
 
 namespace Dgraph_dotnet.tests.e2e.Orchestration {
     public class DgraphClientFactory : IDisposable {
 
         private readonly GraphSchemaIOConnection ConnectionConfig;
 
-        private readonly HttpClient HttpClient;
-
-        private readonly GraphSchemaIOClient GSioClient;
+        private readonly IGraphSchemaIOClient GSioClient;
 
         private DgraphInstance GSioDgraph;
 
         // I'll need to store the GraphSchmaIO connection info to the actual
         // instance and creds in here
 
-        public DgraphClientFactory(GraphSchemaIOConnection connectionConfig) {
+        public DgraphClientFactory(GraphSchemaIOConnection connectionConfig, IGraphSchemaIOClient GSioClient) {
             ConnectionConfig = connectionConfig;
-
-            if (!ConnectionConfig.Endpoint.Equals("localhost")) {
-                HttpClient = new HttpClient();
-                HttpClient.BaseAddress = new Uri(ConnectionConfig.Endpoint);
-
-                HttpClient.DefaultRequestHeaders.Add(HeaderNames.Authorization, $"X-GraphSchemaIO-ApiKey {ConnectionConfig.ApiKeyId}:{ConnectionConfig.ApiKeySecret}");
-
-                GSioClient = new GraphSchemaIOClient(HttpClient);
-            }
+            this.GSioClient = GSioClient;
         }
 
         public async Task<Result> ProvisionDgraph() {
@@ -63,13 +55,14 @@ namespace Dgraph_dotnet.tests.e2e.Orchestration {
                 }
 
                 GSioDgraph = dgresult.Value;
+                await CheckVersion();
             }
             return Results.Ok();
         }
 
         public async Task DestroyDgraph() {
             if (!ConnectionConfig.Endpoint.Equals("localhost")) {
-                await GSioClient.DeleteDgraphInstance(GSioDgraph.DgraphId);
+                await GSioClient.DeleteDgraphInstance(GSioDgraph.Id);
             }
         }
 
@@ -86,7 +79,7 @@ namespace Dgraph_dotnet.tests.e2e.Orchestration {
                 var clientKey = GSioDgraph.Certificates.ClientKey;
                 var tls = new SslCredentials(caCert, new KeyCertificatePair(clientCert, clientKey));
 
-                client.Connect("...GraphSchema.io Dgraph address...", tls);
+                client.Connect(GSioDgraph.Address, tls);
                 return client;
             }
         }
@@ -108,6 +101,34 @@ namespace Dgraph_dotnet.tests.e2e.Orchestration {
                 return client;
             } else {
                 throw new NotImplementedException();
+            }
+        }
+
+        private async Task CheckVersion() {
+            using(var client = GetDgraphClient()) {
+                // ATM GraphSchema.io deploys out the Dgraphs, but doesn't wait
+                // till it's all up before returning. So it is possible for the
+                // infrastructure to still be spinning up after a Dgraph is
+                // returned - you'd get: 
+                //
+                // "Status(StatusCode=Unknown, Detail=\"Please retry again,
+                // server is not ready to accept requests\")".  
+                //
+                // Don't think waiting for this should be built into the
+                // IGraphSchemaIOClient, cause then it will only work with C#
+                // clients.  For now, I'll leave it as client responsiblity to
+                // check, but really GraphSchema.io shouldn't return the
+                // instance untill it can verify that it's all awake. But that's
+                // another layer of infrastructure, so for now, clients test.
+                for (int i = 1; i < 4; i++) {
+                    var result = await client.CheckVersion();
+                    if (result.IsSuccess) {
+                        Log.Information("Connected to Dgraph version {Version}", result.Value);
+                        return;
+                    }
+                    // should use Polly and backoff?
+                    Thread.Sleep(TimeSpan.FromSeconds(30));
+                }
             }
         }
 
