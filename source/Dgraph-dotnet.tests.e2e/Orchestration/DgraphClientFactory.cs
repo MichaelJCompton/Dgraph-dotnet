@@ -61,7 +61,7 @@ namespace Dgraph_dotnet.tests.e2e.Orchestration {
         }
 
         public async Task DestroyDgraph() {
-            if (!ConnectionConfig.Endpoint.Equals("localhost")) {
+            if (!ConnectionConfig.Endpoint.Equals("localhost") && GSioDgraph != null) {
                 await GSioClient.DeleteDgraphInstance(GSioDgraph.Id);
             }
         }

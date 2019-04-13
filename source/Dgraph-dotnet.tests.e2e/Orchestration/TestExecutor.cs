@@ -23,26 +23,28 @@ namespace Dgraph_dotnet.tests.e2e.Orchestration {
 
         public async Task ExecuteAll(IEnumerable<string> tests) {
 
-            var result = await ClientFactory.ProvisionDgraph();
-            if(result.IsFailed) {
-                TestsFailed = tests.Count();
-                _Exceptions.Add(new DgraphDotNetTestFailure(string.Join("\n", result.Reasons.Select(r => r.Message))));
-                return;
-            }
-
-            foreach (var test in TestFinder.FindTests(tests)) {
-                try {
-                    TestsRun++;
-                    await test.Setup();
-                    await test.Test();
-                    await test.TearDown();
-                } catch (Exception ex) {
-                    TestsFailed++;
-                    _Exceptions.Add(ex);
+            try {
+                var result = await ClientFactory.ProvisionDgraph();
+                if (result.IsFailed) {
+                    TestsFailed = tests.Count();
+                    _Exceptions.Add(new DgraphDotNetTestFailure("Failed to provision Dgraph", result));
+                    return;
                 }
-            }
 
-            await ClientFactory.DestroyDgraph();
+                foreach (var test in TestFinder.FindTests(tests)) {
+                    try {
+                        TestsRun++;
+                        await test.Setup();
+                        await test.Test();
+                        await test.TearDown();
+                    } catch (Exception ex) {
+                        TestsFailed++;
+                        _Exceptions.Add(ex);
+                    }
+                }
+            } finally {
+                await ClientFactory.DestroyDgraph();
+            }
         }
     }
 }
