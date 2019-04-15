@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using Assent.Namers;
 using Dgraph_dotnet.tests.e2e.Errors;
 using Dgraph_dotnet.tests.e2e.Orchestration;
+using FluentResults;
 using Microsoft.Extensions.FileProviders;
 
 namespace Dgraph_dotnet.tests.e2e.Tests {
@@ -54,5 +55,12 @@ namespace Dgraph_dotnet.tests.e2e.Tests {
                 }
             }
         }
+
+        protected void AssertResultIsSuccess(ResultBase result, string msg = null) {
+            if(result.IsFailed) {
+                throw new DgraphDotNetTestFailure(msg ?? "Expected success result, but got failed", result);
+            }
+        }
+
     }
 }

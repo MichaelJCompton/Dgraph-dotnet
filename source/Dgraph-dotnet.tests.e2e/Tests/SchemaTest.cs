@@ -1,8 +1,9 @@
 using System.Threading.Tasks;
 using Assent;
-using FluentAssertions;
+using Dgraph_dotnet.tests.e2e.Errors;
 using Dgraph_dotnet.tests.e2e.Orchestration;
 using DgraphDotNet;
+using FluentAssertions;
 
 namespace Dgraph_dotnet.tests.e2e.Tests {
     public class SchemaTest : GraphSchemaE2ETest {
@@ -20,34 +21,36 @@ namespace Dgraph_dotnet.tests.e2e.Tests {
         }
 
         private async Task InitialSchemaIsAsExpected(IDgraphClient client) {
-            var schema = await client.SchemaQuery();
-            schema.IsSuccess.Should().BeTrue();
-            this.Assent(schema.Value.ToString(), AssentConfiguration);
+            var schemaResult = await client.SchemaQuery();
+            AssertResultIsSuccess(schemaResult);
+            this.Assent(schemaResult.Value.ToString(), AssentConfiguration);
         }
 
-        private async Task AlterSchemAsExpected(IDgraphClient client) { 
+        private async Task AlterSchemAsExpected(IDgraphClient client) {
             var alterSchemaResult = await client.AlterSchema(ReadEmbeddedFile("test.schema"));
-            alterSchemaResult.IsSuccess.Should().BeTrue();
-            var schema = await client.SchemaQuery();
-            schema.IsSuccess.Should().BeTrue();
-            this.Assent(schema.Value.ToString(), AssentConfiguration);
+            AssertResultIsSuccess(alterSchemaResult);
+
+            var schemaResult = await client.SchemaQuery();
+            AssertResultIsSuccess(schemaResult);
+            this.Assent(schemaResult.Value.ToString(), AssentConfiguration);
         }
 
-        private async Task AlterSchemaAgainAsExpected(IDgraphClient client) { 
+        private async Task AlterSchemaAgainAsExpected(IDgraphClient client) {
             var alterSchemaResult = await client.AlterSchema(ReadEmbeddedFile("altered.schema"));
-            alterSchemaResult.IsSuccess.Should().BeTrue();
-            var schema = await client.SchemaQuery();
-            schema.IsSuccess.Should().BeTrue();
-            this.Assent(schema.Value.ToString(), AssentConfiguration);
+            AssertResultIsSuccess(alterSchemaResult);
+
+            var schemaResult = await client.SchemaQuery();
+            AssertResultIsSuccess(schemaResult);
+            this.Assent(schemaResult.Value.ToString(), AssentConfiguration);
         }
 
-        private async Task SchemaQueryWithRestrictions(IDgraphClient client) { 
-            var schema = await client.SchemaQuery("schema(pred: [name, friends, dob, scores]) { type }");
-            schema.IsSuccess.Should().BeTrue();
-            this.Assent(schema.Value.ToString(), AssentConfiguration);
+        private async Task SchemaQueryWithRestrictions(IDgraphClient client) {
+            var schemaResult = await client.SchemaQuery("schema(pred: [name, friends, dob, scores]) { type }");
+            AssertResultIsSuccess(schemaResult);
+            this.Assent(schemaResult.Value.ToString(), AssentConfiguration);
         }
 
-        private async Task ErrorsResultInFailedQuery(IDgraphClient client) { 
+        private async Task ErrorsResultInFailedQuery(IDgraphClient client) {
             // maformed
             var q1result = await client.SchemaQuery("schema(pred: [name, friends, dob, scores]) { type ");
             q1result.IsSuccess.Should().BeFalse();

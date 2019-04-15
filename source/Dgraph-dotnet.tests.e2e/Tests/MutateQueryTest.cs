@@ -57,9 +57,7 @@ query people($name: string) {
         public async override Task Setup() {
             await base.Setup();
             var alterSchemaResult = await ClientFactory.GetDgraphClient().AlterSchema(ReadEmbeddedFile("test.schema"));
-            if (alterSchemaResult.IsFailed) {
-                throw new DgraphDotNetTestFailure("Failed to clean database in test setup", alterSchemaResult);
-            }
+            AssertResultIsSuccess(alterSchemaResult);
 
             Person1 = new Person() {
                 Uid = "_:Person1",
@@ -109,9 +107,7 @@ query people($name: string) {
                 var json = JsonConvert.SerializeObject(personList);
 
                 var result = await transaction.Mutate(json);
-                if (result.IsFailed) {
-                    throw new DgraphDotNetTestFailure("Mutation failed", result);
-                }
+                AssertResultIsSuccess(result, "Mutation failed");
 
                 // The payload of the result is a node->uid map of newly
                 // allocated nodes.  If the nodes don't have uid names in the
@@ -144,9 +140,7 @@ query people($name: string) {
 
             foreach (var person in people) {
                 var queryPerson = await client.Query(QueryByUid(person.Uid));
-                if (queryPerson.IsFailed) {
-                    throw new DgraphDotNetTestFailure("Query failed", queryPerson);
-                }
+                AssertResultIsSuccess(queryPerson, "Query failed");
 
                 // the query result is json like { q: [ ...Person... ] }
                 AssertStringIsPerson(queryPerson.Value, person);
@@ -163,9 +157,7 @@ query people($name: string) {
                 var json = JsonConvert.SerializeObject(Person3);
 
                 var result = await transaction.Mutate(json);
-                if (result.IsFailed) {
-                    throw new DgraphDotNetTestFailure("Mutation failed", result);
-                }
+                AssertResultIsSuccess(result, "Mutation failed");
 
                 // no nodes were allocated
                 result.Value.Count.Should().Be(0);
@@ -174,19 +166,16 @@ query people($name: string) {
             }
 
             var queryPerson = await client.Query(QueryByUid(Person3.Uid));
-            if (queryPerson.IsFailed) {
-                throw new DgraphDotNetTestFailure("Query failed", queryPerson);
-            }
+            AssertResultIsSuccess(queryPerson, "Query failed");
 
             AssertStringIsPerson(queryPerson.Value, Person3);
         }
 
         private async Task QueryWithVars(IDgraphClient client) {
 
-            var queryResult = await client.QueryWithVars(QueryByName, new Dictionary<string, string> { { "$name", Person3.Name } });
-            if (queryResult.IsFailed) {
-                throw new DgraphDotNetTestFailure("Query failed", queryResult);
-            }
+            var queryResult = await client.QueryWithVars(
+                QueryByName, new Dictionary<string, string> { { "$name", Person3.Name } });
+            AssertResultIsSuccess(queryResult, "Query failed");
 
             AssertStringIsPerson(queryResult.Value, Person3);
         }
@@ -196,18 +185,14 @@ query people($name: string) {
 
                 // delete a node by passing JSON like this to delete
                 var deleteResult = await transaction.Delete($"{{\"uid\": \"{Person1.Uid}\"}}");
-                if (deleteResult.IsFailed) {
-                    throw new DgraphDotNetTestFailure("Delete failed", deleteResult);
-                }
+                AssertResultIsSuccess(deleteResult, "Delete failed");
 
                 await transaction.Commit();
             }
 
             // that person should be gone...
             var queryPerson1 = await client.Query(QueryByUid(Person1.Uid));
-            if (queryPerson1.IsFailed) {
-                throw new DgraphDotNetTestFailure("Query failed", queryPerson1);
-            }
+            AssertResultIsSuccess(queryPerson1, "Query failed");
 
             // no matter what uid you query for, Dgraph always succeeds :-(
             // e.g. on a fresh dgraph with no uids allocated
@@ -216,7 +201,7 @@ query people($name: string) {
             // "q": [ { "uid": "0x44444444" } ] 
             //
             // so the only way to test that the node is deleted, 
-            // is to test that we got that back
+            // is to test that we got only that back
 
             queryPerson1.Value.Should().Be($"{{\"q\":[{{\"uid\":\"{Person1.Uid}\"}}]}}");
 
@@ -224,9 +209,7 @@ query people($name: string) {
             // ... but watch out, Dgraph can leave dangling references :-(
             // -----------------------------------------------------------
             var queryPerson3 = await client.Query(QueryByUid(Person3.Uid));
-            if (queryPerson3.IsFailed) {
-                throw new DgraphDotNetTestFailure("Query failed", queryPerson3);
-            }
+            AssertResultIsSuccess(queryPerson3, "Query failed");
             var person3 = JObject.Parse(queryPerson3.Value) ["q"][0].ToObject<Person>();
 
             person3.Friends.Count.Should().Be(2);
