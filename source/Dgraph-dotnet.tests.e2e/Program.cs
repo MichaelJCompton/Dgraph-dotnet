@@ -52,13 +52,12 @@ namespace Dgraph_dotnet.tests.e2e {
                 services.AddSingleton<GraphSchemaIOConnection>(graphschemaIOconnection);
 
                 if (!graphschemaIOconnection.Endpoint.Equals("localhost")) {
-                    var httpClient = new HttpClient();
-                    httpClient.BaseAddress = new Uri(graphschemaIOconnection.Endpoint);
+                    services.AddGraphSchemaIOLClient(httpClient => {
+                        httpClient.BaseAddress = new Uri(graphschemaIOconnection.Endpoint);
 
-                    httpClient.DefaultRequestHeaders.Add(HeaderNames.Authorization,
-                        $"X-GraphSchemaIO-ApiKey {graphschemaIOconnection.ApiKeyId}:{graphschemaIOconnection.ApiKeySecret}");
-
-                    services.AddGraphSchemaIOLClient(httpClient);
+                        httpClient.DefaultRequestHeaders.Add(HeaderNames.Authorization,
+                            $"X-GraphSchemaIO-ApiKey {graphschemaIOconnection.ApiKeyId}:{graphschemaIOconnection.ApiKeySecret}");
+                    });
                 }
 
                 // Inject in every possible test type so that DI will be able to
@@ -86,15 +85,15 @@ namespace Dgraph_dotnet.tests.e2e {
                 return 0;
 
             } catch (AggregateException aggEx) {
-                foreach(var ex in aggEx.InnerExceptions) {
+                foreach (var ex in aggEx.InnerExceptions) {
                     switch (ex) {
                         case DgraphDotNetTestFailure testEx:
                             Log.Error("Test Failed with reason {@Reason}", testEx.FailureReason);
                             Log.Error(testEx, "Call Stack");
-                        break;
+                            break;
                         default:
                             Log.Error(ex, "Unknown Exception Failure");
-                        break;
+                            break;
                     }
                 }
             } catch (Exception ex) {
