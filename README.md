@@ -14,7 +14,7 @@ Versions of this library match up to Dgraph versions as follows:
 
 | DgraphDotNet versions | Dgraph version |
 | -------- | ------ |
-| v0.6.0 | v1.0.13 |
+| v0.6.0 | v1.0.14, v1.0.13 |
 | v0.5.0 .. v0.5.3 | v1.0.13 |
 | v0.4.0 .. v0.4.2 | v1.0.9 |
 | v0.3.0 | v1.0.5 |
