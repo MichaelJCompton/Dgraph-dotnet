@@ -66,14 +66,21 @@ namespace DgraphDotNet {
 
         /// <summary>
         /// If there is a node with "node --- predicate ---> value", then it and
-        /// true are returned, otherwise the node and predicate are created
-        /// (atomically) and the new node and false are returned. Interally uses
-        /// Dgraph's "func: eq", so values are limmited to:
+        /// true are returned, otherwise the mutation is run and false and the
+        /// node it creates is returned. The operation happens atomically, so
+        /// either the node exists and is returned or the mutation is executed.
+        ///
+        ///
+        /// predicate is expected to have the @upsert directive in the schema
+        ///
+        /// Interally uses Dgraph's "func: eq", so values are limmited to:
         /// https://docs.dgraph.io/master/query-language/#inequality
         /// </summary>
-        Task<FluentResults.Result<(INode, bool)>> Upsert(string predicate, GraphValue value, int maxRetry = 1);
+        Task<FluentResults.Result<(IUIDNode node, bool existing)>> Upsert(
+            string predicate, 
+            GraphValue value, 
+            string mutation,
+            int maxRetry = 1);
 
-        // FIXME: To come are options for TLS, setting policy for retries etc
-        // and managing connections
     }
 }

@@ -15,43 +15,6 @@ namespace Dgraph_dotnet.tests.e2e.Tests {
 
         private Person Person1, Person2, Person3;
 
-        private string QueryByUid(string uid) =>
-            "{  "
-            + $"    q(func: uid({uid})) "
-            + "     {   "
-            + "        uid  "
-            + "        name  "
-            + "        dob  "
-            + "        height  "
-            + "        scores  "
-            + "        friends {   "
-            + "            uid  "
-            + "            name  "
-            + "            dob  "
-            + "            height  "
-            + "            scores   "
-            + "        }   "
-            + "    }   "
-            + "}";
-
-        private readonly string QueryByName = @"
-query people($name: string) {
-    q(func: eq(name, $name)) {
-        uid
-        name
-        dob
-        height
-        scores
-        friends {
-            uid
-            name
-            dob
-            height
-            scores
-        }
-    }
-}";
-
         public MutateQueryTest(DgraphClientFactory clientFactory) : base(clientFactory) { }
 
         public async override Task Setup() {
@@ -139,11 +102,11 @@ query people($name: string) {
             var people = new List<Person> { Person1, Person2, Person3 };
 
             foreach (var person in people) {
-                var queryPerson = await client.Query(QueryByUid(person.Uid));
+                var queryPerson = await client.Query(FriendQueries.QueryByUid(person.Uid));
                 AssertResultIsSuccess(queryPerson, "Query failed");
 
                 // the query result is json like { q: [ ...Person... ] }
-                AssertStringIsPerson(queryPerson.Value, person);
+                FriendQueries.AssertStringIsPerson(queryPerson.Value, person);
             }
         }
 
@@ -165,19 +128,20 @@ query people($name: string) {
                 await transaction.Commit();
             }
 
-            var queryPerson = await client.Query(QueryByUid(Person3.Uid));
+            var queryPerson = await client.Query(FriendQueries.QueryByUid(Person3.Uid));
             AssertResultIsSuccess(queryPerson, "Query failed");
 
-            AssertStringIsPerson(queryPerson.Value, Person3);
+            FriendQueries.AssertStringIsPerson(queryPerson.Value, Person3);
         }
 
         private async Task QueryWithVars(IDgraphClient client) {
 
             var queryResult = await client.QueryWithVars(
-                QueryByName, new Dictionary<string, string> { { "$name", Person3.Name } });
+                FriendQueries.QueryByName,
+                new Dictionary<string, string> { { "$name", Person3.Name } });
             AssertResultIsSuccess(queryResult, "Query failed");
 
-            AssertStringIsPerson(queryResult.Value, Person3);
+            FriendQueries.AssertStringIsPerson(queryResult.Value, Person3);
         }
 
         private async Task DeleteAPerson(IDgraphClient client) {
@@ -191,7 +155,7 @@ query people($name: string) {
             }
 
             // that person should be gone...
-            var queryPerson1 = await client.Query(QueryByUid(Person1.Uid));
+            var queryPerson1 = await client.Query(FriendQueries.QueryByUid(Person1.Uid));
             AssertResultIsSuccess(queryPerson1, "Query failed");
 
             // no matter what uid you query for, Dgraph always succeeds :-(
@@ -208,7 +172,7 @@ query people($name: string) {
             // -----------------------------------------------------------
             // ... but watch out, Dgraph can leave dangling references :-(
             // -----------------------------------------------------------
-            var queryPerson3 = await client.Query(QueryByUid(Person3.Uid));
+            var queryPerson3 = await client.Query(FriendQueries.QueryByUid(Person3.Uid));
             AssertResultIsSuccess(queryPerson3, "Query failed");
             var person3 = JObject.Parse(queryPerson3.Value) ["q"][0].ToObject<Person>();
 
@@ -216,12 +180,6 @@ query people($name: string) {
 
             // You'll need something like GraphSchema to handle things like
             // cascading deletes etc. and clean up automatically :-)
-        }
-
-        public void AssertStringIsPerson(string json, Person person) {
-            var people = JObject.Parse(json) ["q"].ToObject<List<Person>>();
-            people.Count.Should().Be(1);
-            people[0].Should().BeEquivalentTo(person);
         }
 
     }

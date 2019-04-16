@@ -21,8 +21,10 @@ Dgraph-dotnet versioning adheres to [Semantic Versioning](http://semver.org/spec
 - Everything goes Async.  Old synchronous calls have all been removed.
 - SchemaQuery updated (Dgraph deprecated old response).  Now returns a schema object model. 
 - Catch more exceptions and returns as errors (e.g. CheckVersion).
+- Upsert becomes more generic and useful (signature changed).
 
 *Other*
+
 - Test projects being removed in faviour of end-to-end testing.
 - Updated to new Dgraph transaction handling.
 

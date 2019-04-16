@@ -144,20 +144,24 @@ namespace DgraphDotNet {
             return transactionFactory.NewTransaction(this);
         }
 
-        public async Task<FluentResults.Result<(INode, bool)>> Upsert(string predicate, GraphValue value, int maxRetrys = 1) {
+        public async Task<FluentResults.Result<(IUIDNode, bool)>> Upsert(
+            string predicate, 
+            GraphValue value, 
+            string mutation,
+            int maxRetrys = 1
+        ) {
             AssertNotDisposed();
 
             var query = $"{{ q(func: eq({predicate}, \"{value.ToString()}\")) {{ uid }} }}";
-            var newNodeBlankName = "upsertNode";
 
             var retryRemaining = (maxRetrys < 1) ? 1 : maxRetrys;
-            FluentResults.Result<(INode, bool)> result = null;
+            FluentResults.Result<(IUIDNode, bool)> result = null;
 
-            Func<FluentResults.Result<(INode, bool)>, FluentResults.Result<(INode, bool)>, FluentResults.Result<(INode, bool)>> addErr =
-                (FluentResults.Result<(INode, bool)> curError, FluentResults.Result<(INode, bool)> newError) => {
+            Func<FluentResults.Result<(IUIDNode, bool)>, FluentResults.Result<(IUIDNode, bool)>, FluentResults.Result<(IUIDNode, bool)>> addErr =
+                (FluentResults.Result<(IUIDNode, bool)> curError, FluentResults.Result<(IUIDNode, bool)> newError) => {
                     return curError == null || !curError.IsFailed
                         ? newError
-                        : Results.Merge<(INode, bool)>(curError, newError);
+                        : Results.Merge<(IUIDNode, bool)>(curError, newError);
                 };
 
             while (retryRemaining >= 0) {
@@ -167,26 +171,26 @@ namespace DgraphDotNet {
                     var queryResult = await txn.Query(query);
 
                     if (queryResult.IsFailed) {
-                        result = addErr(result, queryResult.ToResult<(INode, bool)>());
+                        result = addErr(result, queryResult.ToResult<(IUIDNode, bool)>());
                         continue;
                     }
 
                     if (String.Equals(queryResult.Value, "{\"q\":[]}", StringComparison.Ordinal)) {
-                        var assigned = await txn.Mutate($"{{ \"uid\": \"_:{newNodeBlankName}\", \"{predicate}\": \"{value.ToString()}\" }}");
+                        var assigned = await txn.Mutate(mutation);
                         if (assigned.IsFailed) {
-                            result = addErr(result, assigned.ToResult<(INode, bool)>());
+                            result = addErr(result, assigned.ToResult<(IUIDNode, bool)>());
                             continue;
                         }
                         var err = await txn.Commit();
                         if (err.IsSuccess) {
-                            var UIDasString = assigned.Value[newNodeBlankName].Replace("0x", string.Empty); // why doesn't UInt64.TryParse() work with 0x...???
+                            var UIDasString = assigned.Value["blank-0"].Replace("0x", string.Empty); // why doesn't UInt64.TryParse() work with 0x...???
                             if (UInt64.TryParse(UIDasString, NumberStyles.HexNumber, CultureInfo.InvariantCulture, out var UID)) {
-                                return Results.Ok<(INode, bool)>((new UIDNode(UID),false));
+                                return Results.Ok<(IUIDNode, bool)>((new UIDNode(UID),false));
                             }
-                            result = addErr(result, Results.Fail<(INode, bool)>("Failed to parse UID : " + UIDasString));
+                            result = addErr(result, Results.Fail<(IUIDNode, bool)>("Failed to parse UID : " + UIDasString));
                             continue;
                         }
-                        result = addErr(result, err.ToResult<(INode, bool)>());
+                        result = addErr(result, err.ToResult<(IUIDNode, bool)>());
                         continue;
                     } else {
                         var UIDasString = queryResult.Value
@@ -194,9 +198,9 @@ namespace DgraphDotNet {
                             .Replace("\"}]}", string.Empty);
 
                         if (UInt64.TryParse(UIDasString, NumberStyles.HexNumber, CultureInfo.InvariantCulture, out var UID)) {
-                            return Results.Ok<(INode, bool)>((new UIDNode(UID),true));
+                            return Results.Ok<(IUIDNode, bool)>((new UIDNode(UID),true));
                         }
-                        result = addErr(result, Results.Fail<(INode, bool)>("Failed to parse UID : " + UIDasString));
+                        result = addErr(result, Results.Fail<(IUIDNode, bool)>("Failed to parse UID : " + UIDasString));
                         continue;
                     }
                 }

@@ -58,6 +58,8 @@ namespace Dgraph_dotnet.tests.e2e {
                         httpClient.DefaultRequestHeaders.Add(HeaderNames.Authorization,
                             $"X-GraphSchemaIO-ApiKey {graphschemaIOconnection.ApiKeyId}:{graphschemaIOconnection.ApiKeySecret}");
                     });
+                } else {
+                    services.AddGraphSchemaIOLClient(httpClient => { }); // only needed to make DI happy
                 }
 
                 // Inject in every possible test type so that DI will be able to
