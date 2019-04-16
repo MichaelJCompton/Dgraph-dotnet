@@ -9,7 +9,7 @@ steps:
   args: ['bash', '-c', 'dotnet test -c Release -p:Version=$(cat GITVERSION) --no-build --no-restore']
 - name: microsoft/dotnet:2.2-sdk
   entrypoint: 'bash'
-  args: ['-c', 'cd source/Dgraph-dotnet.tests.e2e && dotnet run --no-build --no-restore']
+  args: ['-c', 'cd source/Dgraph-dotnet.tests.e2e && dotnet run -c Release --no-build --no-restore']
   secretEnv: ['DGDNE2E_GraphSchemaIOConnection__ApiKeyId', 'DGDNE2E_GraphSchemaIOConnection__ApiKeySecret']
 - name: microsoft/dotnet:2.2-sdk
   args: ['bash', '-c', 'dotnet pack source/Dgraph-dotnet/Dgraph-dotnet.csproj -c Release -p:Version=$(cat GITVERSION) --no-restore --no-build --output ../../artifacts --include-symbols -p:SymbolPackageFormat=snupkg']
