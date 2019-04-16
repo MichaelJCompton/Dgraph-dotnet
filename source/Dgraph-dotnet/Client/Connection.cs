@@ -7,7 +7,7 @@ using Grpc.Core;
 namespace DgraphDotNet {
 
 	internal interface IGRPCConnection : IDisposable {
-		Status LastKnownStatus { get; set; }
+		string Target { get; }
 		Task Alter(Api.Operation op);
         Task<Api.Version> CheckVersion();
 		Task<Response> Query(Api.Request req);
@@ -24,12 +24,11 @@ namespace DgraphDotNet {
 	internal class GRPCConnection : IGRPCConnection {
 
 		private readonly Api.Dgraph.DgraphClient connection;
-		private readonly Channel channel;
 
-		// grpc chans also have public ChannelState State { get; }
+		// grpc chans have public ChannelState State { get; }
+		// could use this to expose a state if needed
 		// https://grpc.io/grpc/csharp/api/Grpc.Core.ChannelState.html
-
-		public Status LastKnownStatus { get; set; }
+		private readonly Channel channel;
 
 		/// <remarks>
 		///       Pre : <c>channel != null</c> <c>connection != null</c> and 
@@ -41,11 +40,9 @@ namespace DgraphDotNet {
 
 			this.channel = channel;
 			this.connection = connection;
-
-			LastKnownStatus = Status.DefaultSuccess;
 		}
 
-		public bool ConnectionOK => LastKnownStatus.StatusCode == StatusCode.OK;
+		public string Target => channel.Target;
 
 		// FIXME: should allow cancellation tokens, deadlines, etc??
 

@@ -23,6 +23,8 @@ namespace DgraphDotNet {
             this.transactionFactory = transactionFactory;
         }
 
+		protected readonly System.Object ClientMutex = new System.Object();
+
         // 
         // ------------------------------------------------------
         //                   Connections
@@ -31,21 +33,21 @@ namespace DgraphDotNet {
 
         #region Connections
 
-        private readonly ConcurrentDictionary<string, IGRPCConnection> connections = new ConcurrentDictionary<string, IGRPCConnection>();
+        private readonly List<IGRPCConnection> connections = new List<IGRPCConnection>();
 
-        public void Connect(string address, ChannelCredentials credentials = null, IEnumerable<ChannelOption> options = null) {
+        public void Connect(
+            string address, 
+            ChannelCredentials credentials = null, 
+            IEnumerable<ChannelOption> options = null
+        ) {
             AssertNotDisposed();
 
             if (!string.IsNullOrEmpty(address)) {
-                if (connections.TryGetValue(address, out IGRPCConnection connection)) {
-                    connection.LastKnownStatus = Status.DefaultSuccess;
-                } else {
-                    if (connectionFactory.TryConnect(address, out connection, credentials, options)) {
-                        if (!connections.TryAdd(address, connection)) {
-                            // another thread wrote in between.  That means there 
-                            // is already a connection for this address, so 
-                            // dispose and ignore this connection.
-                            connection.Dispose();
+                lock(ClientMutex) {
+                    var existing = connections.FirstOrDefault(c => c.Target.Equals(address));
+                    if(existing == null) {
+                        if (connectionFactory.TryConnect(address, out var connection, credentials, options)) {
+                            connections.Add(connection);
                         }
                     }
                 }
@@ -59,7 +61,7 @@ namespace DgraphDotNet {
         public IEnumerable<string> AllConnections() {
             AssertNotDisposed();
 
-            return connections.Select(kvp => kvp.Key);
+            return connections.Select(c => c.Target);
         }
 
         #endregion
@@ -72,7 +74,12 @@ namespace DgraphDotNet {
 
         #region transactions
 
-        private Random rnd = new Random();
+        private int NextConnection = 0;
+        private int GetNextConnection() {
+			var next = NextConnection;
+			NextConnection = (next  + 1) % connections.Count;
+            return next;
+        }			
 
         public async Task<FluentResults.Result> AlterSchema(string newSchema) {
             AssertNotDisposed();
@@ -81,7 +88,7 @@ namespace DgraphDotNet {
             op.Schema = newSchema;
 
             try {
-                await connections.Values.ElementAt(rnd.Next(connections.Count)).Alter(op);
+                await connections[GetNextConnection()].Alter(op);
                 return Results.Ok();
             } catch (RpcException rpcEx) {
                 return Results.Fail(new FluentResults.ExceptionalError(rpcEx));
@@ -96,7 +103,7 @@ namespace DgraphDotNet {
             };
 
             try {
-                await connections.Values.ElementAt(rnd.Next(connections.Count)).Alter(op);
+                await connections[GetNextConnection()].Alter(op);
                 return Results.Ok();
             } catch (RpcException rpcEx) {
                 return Results.Fail(new FluentResults.ExceptionalError(rpcEx));
@@ -107,7 +114,7 @@ namespace DgraphDotNet {
             AssertNotDisposed();
 
             try {
-                var versionResult = await connections.Values.ElementAt(rnd.Next(connections.Count)).CheckVersion();
+                var versionResult = await connections[GetNextConnection()].CheckVersion();
                 return Results.Ok<string>(versionResult.Tag);
             } catch (RpcException rpcEx) {
                 return Results.Fail<string>(new FluentResults.ExceptionalError(rpcEx));
@@ -211,25 +218,25 @@ namespace DgraphDotNet {
         public async Task<Response> Query(Api.Request req) {
             AssertNotDisposed();
 
-            return await connections.Values.ElementAt(rnd.Next(connections.Count)).Query(req);
+            return await connections[GetNextConnection()].Query(req);
         }
 
         public async Task<Assigned> Mutate(Api.Mutation mut) {
             AssertNotDisposed();
 
-            return await connections.Values.ElementAt(rnd.Next(connections.Count)).Mutate(mut);
+            return await connections[GetNextConnection()].Mutate(mut);
         }
 
         public async Task Commit(TxnContext context) {
             AssertNotDisposed();
 
-            await connections.Values.ElementAt(rnd.Next(connections.Count)).Commit(context);
+            await connections[GetNextConnection()].Commit(context);
         }
 
         public async Task Discard(TxnContext context) {
             AssertNotDisposed();
 
-            await connections.Values.ElementAt(rnd.Next(connections.Count)).Discard(context);
+            await connections[GetNextConnection()].Discard(context);
         }
 
         #endregion
@@ -268,7 +275,7 @@ namespace DgraphDotNet {
         protected virtual void DisposeIDisposables() {
             if (!Disposed) {
                 this.disposed = true; // throw ObjectDisposedException on calls to client if it has been disposed. 
-                foreach (var con in connections.Values) {
+                foreach (var con in connections) {
                     con.Dispose();
                 }
             }

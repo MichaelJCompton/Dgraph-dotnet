@@ -81,9 +81,6 @@ namespace DgraphDotNet {
 		// from the server.
 		private ConcurrentDictionary<string, INamedNode> knownNodes = new ConcurrentDictionary<string, INamedNode>();
 
-		private readonly System.Object nodeMutex = new System.Object();
-		protected System.Object ThisClientNodeMutex => nodeMutex;
-
 		public FluentResults.Result<IBlankNode> NewNode() {
 			AssertNotDisposed();
 
@@ -122,7 +119,7 @@ namespace DgraphDotNet {
 			if (!nodes.TryGetValue(nodeName, out TNode resultNode)) {
 				// If we couldn't get it, lock, but something might have written
 				// in between.  Only execute the creation function if we must.
-				lock(ThisClientNodeMutex) {
+				lock(ClientMutex) {
 					if (!nodes.TryGetValue(nodeName, out resultNode)) {
 						resultNode = nodeCreator();
 						nodes[nodeName] = resultNode;
