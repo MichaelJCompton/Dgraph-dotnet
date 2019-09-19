@@ -221,7 +221,7 @@ namespace DgraphDotNet {
             return await connections[GetNextConnection()].Query(req);
         }
 
-        public async Task<Assigned> Mutate(Api.Mutation mut) {
+        public async Task<Response> Mutate(Api.Request mut) {
             AssertNotDisposed();
 
             return await connections[GetNextConnection()].Mutate(mut);
