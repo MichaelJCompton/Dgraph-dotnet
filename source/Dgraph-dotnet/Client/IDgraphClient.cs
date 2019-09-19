@@ -79,6 +79,7 @@ namespace DgraphDotNet {
             string predicate, 
             GraphValue value, 
             string mutation,
+            string blankName,
             int maxRetry = 1);
 
     }

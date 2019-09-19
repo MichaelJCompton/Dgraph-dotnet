@@ -155,6 +155,7 @@ namespace DgraphDotNet {
             string predicate, 
             GraphValue value, 
             string mutation,
+            string blankName,
             int maxRetrys = 1
         ) {
             AssertNotDisposed();
@@ -190,7 +191,7 @@ namespace DgraphDotNet {
                         }
                         var err = await txn.Commit();
                         if (err.IsSuccess) {
-                            var UIDasString = assigned.Value["blank-0"].Replace("0x", string.Empty); // why doesn't UInt64.TryParse() work with 0x...???
+                            var UIDasString = assigned.Value[blankName].Replace("0x", string.Empty); // why doesn't UInt64.TryParse() work with 0x...???
                             if (UInt64.TryParse(UIDasString, NumberStyles.HexNumber, CultureInfo.InvariantCulture, out var UID)) {
                                 return Results.Ok<(IUIDNode, bool)>((new UIDNode(UID),false));
                             }
