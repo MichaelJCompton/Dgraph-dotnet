@@ -10,6 +10,8 @@ namespace Dgraph_dotnet.tests.e2e.Tests.TestClasses
     public class Person
     {
         public string Uid { get; set; }
+        [JsonProperty("dgraph.type")]
+        public string Type { get; } = "Person";
         public string Name { get; set; }
         public List<Person> Friends { get; } = new List<Person>();
         public DateTime Dob { get; set; }

@@ -1,9 +1,16 @@
 name: string @index(term, exact) @upsert .
-friends: uid @reverse @count .
+friends: [uid] @reverse @count .
 dob: dateTime @index(year) .
 abool: bool .
 height: float .
 scores: [int] @index(int) .
 
-
+type Person {
+    name: string
+    friends: [uid]
+    dob: dateTime
+    abool: bool
+    height: float
+    scores: [int]
+}
 

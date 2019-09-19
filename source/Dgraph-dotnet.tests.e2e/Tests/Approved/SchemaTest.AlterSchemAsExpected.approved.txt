@@ -1,11 +1,7 @@
-_predicate_: [string] .
 abool: bool .
-dgraph.group.acl: string .
-dgraph.password: password .
-dgraph.user.group: uid @reverse .
-dgraph.xid: string @index(exact) .
+dgraph.type: [string] @index(exact) .
 dob: datetime @index(year) .
-friends: uid @reverse @count .
+friends: [uid] @reverse @count .
 height: float .
 name: string @index(term,exact) @upsert .
 scores: [int] @index(int) .
