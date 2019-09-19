@@ -5,6 +5,17 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 Dgraph-dotnet versioning adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## 0.7.0 - [2019-09-19]
+
+### Added
+
+### Changed
+
+*Breaking Changes*
+
+- Upsert changed signature to cope with Dgraph changing how blank nodes are returned from mutations.  
+
+There were a bunch of breaking changes in Dgraph v1.1, but Dgraph-dotnet shielded users from that.  However, Dgraph added a new kind of upsert in v1.1.  Dgraph-dotnet should be updated to include that.
 
 ## 0.6.0 - [2019-04-17]
 

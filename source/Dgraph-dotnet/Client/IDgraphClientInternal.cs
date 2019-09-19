@@ -11,7 +11,7 @@ namespace DgraphDotNet {
 
         Task<Response> Query(Request req);
 
-        Task<Assigned> Mutate(Api.Mutation mut);
+        Task<Response> Mutate(Request mut);
 
         Task Commit(TxnContext context);
 

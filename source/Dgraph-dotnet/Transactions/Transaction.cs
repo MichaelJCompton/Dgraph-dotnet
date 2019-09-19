@@ -116,19 +116,22 @@ namespace DgraphDotNet.Transactions {
             HasMutated = true;
 
             try {
-                mutation.StartTs = Context.StartTs;
-                var assigned = await Client.Mutate(mutation);
+			    Api.Request req = new Api.Request();
+			    req.Mutations.Add(mutation);
+
+                req.StartTs = Context.StartTs;
+                var response = await Client.Mutate(req);
 
                 if (mutation.CommitNow) {
                     TransactionState = TransactionState.Committed;
                 }
 
-                var err = MergeContext(assigned.Context);
+                var err = MergeContext(response.Txn);
                 if (err.IsFailed) {
                     return err.ToResult<IDictionary<string, string>>();
                 }
 
-                return Results.Ok<IDictionary<string, string>>(assigned.Uids);
+                return Results.Ok<IDictionary<string, string>>(response.Uids);
 
             } catch (RpcException rpcEx) {
 

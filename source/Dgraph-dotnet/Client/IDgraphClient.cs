@@ -9,7 +9,6 @@ using Grpc.Core;
  *
  *  service Dgraph {
  *	  rpc Query (Request)            returns (Response) {}
- *    rpc Mutate (Mutation)          returns (Assigned) {}
  *    rpc Alter (Operation)          returns (Payload) {}
  *    rpc CommitOrAbort (TxnContext) returns (TxnContext) {}
  *    rpc CheckVersion(Check)        returns (Version) {}
@@ -80,6 +79,7 @@ namespace DgraphDotNet {
             string predicate, 
             GraphValue value, 
             string mutation,
+            string blankName,
             int maxRetry = 1);
 
     }

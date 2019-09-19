@@ -27,10 +27,14 @@ namespace Dgraph_dotnet.tests.Client {
             transactionFactory.NewTransaction(client).Returns(txn);
 
             txn.Query(Arg.Any<string>()).Returns(Results.Ok<string>("{\"q\":[]}"));
-            txn.Mutate(Arg.Any<string>()).Returns(Results.Ok<IDictionary<string, string>>(new Dictionary<string, string> { { "blank-0", "0x1bf" } }));
+            txn.Mutate(Arg.Any<string>()).Returns(Results.Ok<IDictionary<string, string>>(new Dictionary<string, string> { { "aBlankName", "0x1bf" } }));
             txn.Commit().Returns(Results.Ok());
 
-            var result = await client.Upsert("aPredicate", GraphValue.BuildStringValue("aString"), "a mutation");
+            var result = await client.Upsert(
+                "aPredicate", 
+                GraphValue.BuildStringValue("aString"), 
+                "a mutation",
+                "aBlankName");
 
             Assert.IsTrue(result.IsSuccess);
             var (node,existed) = result.Value;
@@ -52,7 +56,11 @@ namespace Dgraph_dotnet.tests.Client {
 
             txn.Query(Arg.Any<string>()).Returns(Results.Ok<string>("{\"q\":[{\"uid\":\"0x1bf\"}]}"));
 
-            var result = await client.Upsert("aPredicate", GraphValue.BuildStringValue("aString"), "a mutation");
+            var result = await client.Upsert(
+                "aPredicate", 
+                GraphValue.BuildStringValue("aString"), 
+                "a mutation",
+                "aBlankName");
 
             Assert.IsTrue(result.IsSuccess);
             var (node,existed) = result.Value;
@@ -73,10 +81,14 @@ namespace Dgraph_dotnet.tests.Client {
             transactionFactory.NewTransaction(client).Returns(txn);
 
             txn.Query(Arg.Any<string>()).Returns(Results.Ok<string>("{\"q\":[]}"), Results.Ok<string>("{\"q\":[{\"uid\":\"0x1bf\"}]}"));
-            txn.Mutate(Arg.Any<string>()).Returns(Results.Ok<IDictionary<string, string>>(new Dictionary<string, string> { { "blank-0", "0xfff" } }));
+            txn.Mutate(Arg.Any<string>()).Returns(Results.Ok<IDictionary<string, string>>(new Dictionary<string, string> { { "aBlankName", "0xfff" } }));
             txn.Commit().Returns(Results.Fail("This transaction had a conflict"));
 
-            var result = await client.Upsert("aPredicate", GraphValue.BuildStringValue("aString"), "a mutation");
+            var result = await client.Upsert(
+                "aPredicate", 
+                GraphValue.BuildStringValue("aString"), 
+                "a mutation",
+                "aBlankName");
 
             Assert.IsTrue(result.IsSuccess);
             var (node,existed) = result.Value;
@@ -98,7 +110,11 @@ namespace Dgraph_dotnet.tests.Client {
 
             txn.Query(Arg.Any<string>()).Returns(Results.Fail<string>("This didn't work"));
 
-            var node = await client.Upsert("aPredicate", GraphValue.BuildStringValue("aString"), "a mutation");
+            var node = await client.Upsert(
+                "aPredicate", 
+                GraphValue.BuildStringValue("aString"), 
+                "a mutation",
+                "aBlankName");
 
             Assert.IsTrue(node.IsFailed);
         }

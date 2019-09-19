@@ -11,7 +11,7 @@ namespace DgraphDotNet {
 		Task Alter(Api.Operation op);
         Task<Api.Version> CheckVersion();
 		Task<Response> Query(Api.Request req);
-		Task<Assigned> Mutate(Api.Mutation mut);
+		Task<Response> Mutate(Api.Request mut);
 		Task Commit(TxnContext context);
 		Task Discard(TxnContext context);
 	}
@@ -66,10 +66,10 @@ namespace DgraphDotNet {
 			return await connection.QueryAsync(req);
 		}
 
-		public async Task<Assigned> Mutate(Api.Mutation mut) {
+		public async Task<Response> Mutate(Api.Request mut) {
 			AssertNotDisposed();
 
-			return await connection.MutateAsync(mut);
+			return await connection.QueryAsync(mut);
 		}
 
 		public async Task Commit(TxnContext context) {

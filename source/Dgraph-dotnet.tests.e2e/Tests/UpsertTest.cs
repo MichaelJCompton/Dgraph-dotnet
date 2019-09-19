@@ -55,11 +55,13 @@ query users($name: string) {
         }
 
         private async Task UpsertNewNodeReturnsFalse(IDgraphClient client) {
+            User1.uid = "_:myBlank";
             var upsertResult =
                 await client.Upsert(
                     nameof(User.Username),
                     GraphValue.BuildStringValue(User1.Username),
-                    JsonConvert.SerializeObject(User1));
+                    JsonConvert.SerializeObject(User1),
+                    "myBlank");
 
             AssertResultIsSuccess(upsertResult);
 
@@ -73,7 +75,8 @@ query users($name: string) {
                 await client.Upsert(
                     nameof(User.Username),
                     GraphValue.BuildStringValue(User1.Username),
-                    JsonConvert.SerializeObject(User1));
+                    JsonConvert.SerializeObject(User1),
+                    "myBlank");
 
             AssertResultIsSuccess(upsertResult);
 
@@ -85,6 +88,7 @@ query users($name: string) {
         private async Task ConcurrentUpsertsWorkCorrectly(IDgraphClient client) {
 
             var user2 = MintAUser("User2");
+            user2.uid = "_:myBlank";
             var predicate = nameof(User.Username);
             var username = GraphValue.BuildStringValue(user2.Username);
             var json = JsonConvert.SerializeObject(user2);
@@ -93,7 +97,8 @@ query users($name: string) {
             Select(i => client.Upsert(
                 predicate,
                 username,
-                json));
+                json,
+                "myBlank"));
 
             var results = await Task.WhenAll(tasks.ToList());
 
