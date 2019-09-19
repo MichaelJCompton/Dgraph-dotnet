@@ -43,7 +43,11 @@ namespace MutationExamples {
 
                     // use Upsert to test for a node and value, and create if
                     // not already in the graph as an atomic operation.
-                    var result = await client.Upsert("Username", GraphValue.BuildStringValue(username), $"{{\"Username\": \"{username}\"}}");
+                    var result = await client.Upsert(
+                        "Username", 
+                        GraphValue.BuildStringValue(username), 
+                        $"{{\"uid\": \"_:myBlank\", \"Username\": \"{username}\"}}",
+                        "myBlank");
 
                     if (result.IsFailed) {
                         Console.WriteLine("Something went wrong : " + result);
