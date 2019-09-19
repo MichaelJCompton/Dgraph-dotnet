@@ -20,7 +20,7 @@ namespace Dgraph_dotnet.tests.Transactions {
 
             await txn.Mutate(new Api.Mutation());
 
-            await client.DidNotReceive().Mutate(Arg.Any<Api.Mutation>());
+            await client.DidNotReceive().Mutate(Arg.Any<Api.Request>());
             txn.TransactionState.Should().Be(TransactionState.OK);
         }
 
@@ -46,7 +46,7 @@ namespace Dgraph_dotnet.tests.Transactions {
 
             await txn.Mutate(mut);
 
-            await client.Received().Mutate(Arg.Is<Api.Mutation>(m => m == mut));
+            await client.Received().Mutate(Arg.Is<Api.Request>(req => req.Mutations[0] == mut));
         }
 
         [Test]
@@ -56,11 +56,11 @@ namespace Dgraph_dotnet.tests.Transactions {
 
             await txn.Mutate("{ }");
 
-            await client.Received().Mutate(Arg.Is<Api.Mutation>(
-                mutation => mutation.Del.Count == 0
-                && mutation.DeleteJson.Length == 0
-                && mutation.Set.Count == 0
-                && mutation.SetJson.Equals(Google.Protobuf.ByteString.CopyFromUtf8("{ }"))));
+            await client.Received().Mutate(Arg.Is<Api.Request>(
+                req => req.Mutations[0].Del.Count == 0
+                && req.Mutations[0].DeleteJson.Length == 0
+                && req.Mutations[0].Set.Count == 0
+                && req.Mutations[0].SetJson.Equals(Google.Protobuf.ByteString.CopyFromUtf8("{ }"))));
         }
 
         [Test]
@@ -70,11 +70,11 @@ namespace Dgraph_dotnet.tests.Transactions {
 
             await txn.Delete("{ }");
 
-            await client.Received().Mutate(Arg.Is<Api.Mutation>(
-                mutation => mutation.Del.Count == 0
-                && mutation.DeleteJson.Equals(Google.Protobuf.ByteString.CopyFromUtf8("{ }"))
-                && mutation.Set.Count == 0
-                && mutation.SetJson.Length == 0));
+            await client.Received().Mutate(Arg.Is<Api.Request>(
+                req => req.Mutations[0].Del.Count == 0
+                && req.Mutations[0].DeleteJson.Equals(Google.Protobuf.ByteString.CopyFromUtf8("{ }"))
+                && req.Mutations[0].Set.Count == 0
+                && req.Mutations[0].SetJson.Length == 0));
         }
 
         [Test]
@@ -83,7 +83,7 @@ namespace Dgraph_dotnet.tests.Transactions {
             var txn = new Transaction(client);
             var mut = new Api.Mutation();
             mut.SetJson = Google.Protobuf.ByteString.CopyFromUtf8("{ }");
-            client.Mutate(Arg.Any<Api.Mutation>()).Throws(new RpcException(new Status(), "Something failed"));
+            client.Mutate(Arg.Any<Api.Request>()).Throws(new RpcException(new Status(), "Something failed"));
 
             var result = await txn.Mutate(mut);
 

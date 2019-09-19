@@ -75,7 +75,7 @@ namespace Dgraph_dotnet.tests.Transactions {
         public async Task All_FailIfTransactionError() {
             // force transaction into error state
             var client = Substitute.For<IDgraphClientInternal>();
-            client.Mutate(Arg.Any<Api.Mutation>()).Throws(new RpcException(new Status(), "Something failed"));
+            client.Mutate(Arg.Any<Api.Request>()).Throws(new RpcException(new Status(), "Something failed"));
             var txn = new Transaction(client);
             
             await txn.Mutate("{ }");

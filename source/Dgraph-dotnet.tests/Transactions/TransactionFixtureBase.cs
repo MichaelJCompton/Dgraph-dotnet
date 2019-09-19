@@ -15,14 +15,14 @@ namespace Dgraph_dotnet.tests.Transactions {
             return (client, response);
         }
 
-        internal (IDgraphClientInternal, Assigned) MinimalClientForMutation() {
+        internal (IDgraphClientInternal, Response) MinimalClientForMutation() {
             var client = Substitute.For<IDgraphClientInternal>();
 
-            var assigned = new Assigned();
-            assigned.Context = new TxnContext();;
-            client.Mutate(Arg.Any<Api.Mutation>()).Returns(assigned);
+            var response = new Response();
+            response.Txn = new TxnContext();;
+            client.Mutate(Arg.Any<Api.Request>()).Returns(response);
 
-            return (client, assigned);
+            return (client, response);
         }
     }
 }
