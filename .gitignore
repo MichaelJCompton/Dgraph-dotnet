@@ -17,3 +17,6 @@ tools/**
 # ignore test runs
 E2E-Logs
 
+/.vs/Dgraph-dotnet/DesignTimeBuild
+/.vs/Dgraph-dotnet/v16/Server/sqlite3
+/.vs/Dgraph-dotnet/v16
