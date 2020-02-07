@@ -1,14 +1,28 @@
 # Dgraph .Net C# library for Dgraph
 
-This library for Dgraph with C# is distributed under the Apache 2.0 license.
+Official Dgraph client implementation for C#. Distributed under the Apache 2.0 license.
 
-It's developed independently to Dgraph.
+Before using this client, we highly recommend that you go through [docs.dgraph.io],
+and understand how to run and work with Dgraph.
 
-Learn more about Dgraph at 
+[docs.dgraph.io]:https://docs.dgraph.io
 
-- [dgraph.io](https://dgraph.io/),
-- [github](https://github.com/dgraph-io/dgraph), and
-- [docs.dgraph.io](https://docs.dgraph.io/)
+## Table of Contents
+- [Install](#install)
+- [Supported Versions](#supported-versions) 
+- [Learning](#learning)
+- [Using](#using)
+    * [Objects and JSON](#objects-and-json)
+    * [Graph edges and mutations](#graph-edges-and-mutations)
+    * [Edges in batches](#edges-in-batches)
+- [Building](#building)
+- [Contributing](#contributing)
+
+## Install
+
+Grab the [Dgraph-dotnet](https://www.nuget.org/packages/Dgraph-dotnet/) NuGet package. 
+
+## Supported Versions
 
 Versions of this library match up to Dgraph versions as follows:
 
@@ -23,20 +37,6 @@ Versions of this library match up to Dgraph versions as follows:
 | v0.1.0 | v1.0.3 |
 
 Checkout the [Changelog](https://github.com/MichaelJCompton/Dgraph-dotnet/blob/master/Changelog.md) for changes between versions.
-
-## Table of Contents
-- [Getting](#getting)
-- [Learning](#learning)
-- [Using](#using)
-    * [Objects and JSON](#objects-and-json)
-    * [Graph edges and mutations](#graph-edges-and-mutations)
-    * [Edges in batches](#edges-in-batches)
-- [Building](#building)
-- [Contributing](#contributing)
-
-## Getting
-
-Grab the [Dgraph-dotnet](https://www.nuget.org/packages/Dgraph-dotnet/) NuGet package. 
 
 ## Learning
 
