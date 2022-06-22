@@ -22,7 +22,7 @@
     <PackageReference Include="Grpc.Tools" Version="1.19.0" PrivateAssets="All" />
     <PackageReference Include="System.ValueTuple" Version="4.4.0"/>
     <PackageReference Include="FluentResults" Version="1.2.0"/>
-    <PackageReference Include="Newtonsoft.Json" Version="12.0.1" />
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
   </ItemGroup>
 
   <ItemGroup>
